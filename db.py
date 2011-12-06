@@ -37,5 +37,8 @@ class NegativeFile(Base):
     def __repr__(self):
         return "<FPFile(%s)>" % self.path
 
+def create_tables():
+    """ For other modules to call if they want tables created """
+    Base.metadata.create_all(engine)
 
 Base.metadata.create_all(engine)

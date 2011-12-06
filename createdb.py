@@ -10,7 +10,6 @@ import random
 def main():
     path = conf.path
     neg = conf.negatives
-    Base.metadata.create_all(engine)
     toprocess = []
     for root, dir, files in os.walk(path):
         for f in files:
