@@ -1,0 +1,9 @@
+[main]
+path: /Users/alastairlocal/Codiach/Popular
+negatives: 10
+
+[modules]
+module: echoprint
+
+[munge]
+munge: sox
