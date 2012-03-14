@@ -68,6 +68,7 @@ db.create_tables()
 if __name__ == "__main__":
     import sys
     if len(sys.argv) > 1 and sys.argv[1] == "-d":
+        # XXX also delete echoprint table
         echoprint_support.fp.erase_database(True)
     else:
         print "run with -d to delete solr and tyrant"

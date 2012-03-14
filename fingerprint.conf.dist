@@ -5,5 +5,10 @@ negatives: 10
 [modules]
 module: echoprint
 
+[echoprint]
+solr_server: localhost
+tyrant_host: localhost
+tyrant_port: 1970
+
 [munge]
 munge: sox
