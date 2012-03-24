@@ -23,7 +23,7 @@ def main():
     fpfiles = toprocess[cutoff:]
 
     for f in negativefiles:
-        nfile = db.NegativeFile(unicode(f, errors="ignore"))
+        nfile = db.FPFile(unicode(f, errors="ignore"), negative=True)
         db.session.add(nfile)
 
     for f in fpfiles:

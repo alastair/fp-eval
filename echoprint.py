@@ -30,9 +30,6 @@ class EchoprintModel(db.Base):
         self.file_id = file.id
         self.trid = trid
 
-
-
-
 class Echoprint(Fingerprint):
 
     def fingerprint(self, file):

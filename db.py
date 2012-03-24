@@ -16,26 +16,14 @@ class FPFile(Base):
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     path = sqlalchemy.Column(sqlalchemy.String)
+    negative = sqlalchemy.Column(sqlalchemy.Boolean)
 
-    def __init__(self, path):
+    def __init__(self, path, negative=False):
         self.path = path
+        self.negative = negative
 
     def __repr__(self):
-        return "<FPFile(%s)>" % self.path
-
-class NegativeFile(Base):
-    """ Files that should be negative matches - don't have a copy
-        of them in the FP database.
-    """
-    __tablename__ = "negative"
-    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    path = sqlalchemy.Column(sqlalchemy.String)
-
-    def __init__(self, path):
-        self.path = path
-
-    def __repr__(self):
-        return "<FPFile(%s)>" % self.path
+        return "<FPFile(%s,n=%s)>" % (self.path, self.negative)
 
 def create_tables():
     """ For other modules to call if they want tables created """

@@ -1,4 +1,4 @@
-
+fingerprint_index = {}
 
 class Fingerprinter(object):
 
