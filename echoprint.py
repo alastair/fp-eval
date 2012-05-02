@@ -10,6 +10,9 @@ import conf
 import echoprint_support.fp
 import echoprint_support.solr
 
+if not conf.conf.has_section("echoprint"):
+    raise Exception("No echoprint configuration section present")
+
 s = conf.conf.get("echoprint", "solr_server")
 th = conf.conf.get("echoprint", "tyrant_host")
 tp = conf.conf.getint("echoprint", "tyrant_port")
@@ -22,30 +25,35 @@ class EchoprintModel(db.Base):
     __tablename__ = "echoprint"
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    file_id = sqlalchemy.Column(sqlalchemy.Integer) #, sqlalchemy.ForeignKey("file.id"))
-    #file = sqlalchemy.orm.relationship()
+    file_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'))
     trid = sqlalchemy.Column(sqlalchemy.String)
 
     def __init__(self, file, trid):
         self.file_id = file.id
         self.trid = trid
 
-class Echoprint(Fingerprint):
+    def __repr__(self):
+        return "Echoprint<%s, id=%s>" % (file_id, trid)
+
+class Echoprint(fingerprint.Fingerprinter):
 
     def fingerprint(self, file):
-        data = self.codegen(file)
+        data = self._codegen(file)
         trid = echoprint_support.fp.new_track_id()
         data = data[0]
         ret = {}
         ret["track_id"] = trid
-        ret["fp"] = echoprint_support.fp.decode_code_string(data["code"])
-        ret["codever"] = data["metadata"]["version"]
-        ret.update(data["metadata"])
-        ret["length"] = ret["duration"]
+        if "code" in data:
+            ret["fp"] = echoprint_support.fp.decode_code_string(data["code"])
+            ret["codever"] = data["metadata"]["version"]
+            ret.update(data["metadata"])
+            ret["length"] = ret["duration"]
+        else:
+            ret["error"] = data
 
-        return ret
+        return (trid, ret)
 
-    def codegen(self, file, start=-1, duration=-1):
+    def _codegen(self, file, start=-1, duration=-1):
         proclist = [codegen_path, os.path.abspath(file)]
         if start > 0:
             proclist.append("%d" % start)
@@ -58,24 +66,27 @@ class Echoprint(Fingerprint):
     def ingest(self, data):
         echoprint_support.fp.ingest(data)
 
+    def ingest_all(self, data):
+        # echoprint ingest will take a list then commit
+        echoprint_support.fp.ingest(data, do_commit=True)
+
     def lookup(self, file):
-        data = self.codegen(file)
+        data = self._codegen(file)
         code = data["code"]
         match = echoprint_support.fp.best_match_for_query(code)
         return match
 
-fingerprint.fp_index["echoprint"] = {
-    "dbmodel": EchoprintModel
+    def delete_all(self):
+        # Erase solr and tokyo tyrant
+        echoprint_support.fp.erase_database(True)
+        # Erase the local database
+        db.session.query(EchoprintModel).delete()
+        db.session.commit()
+
+fingerprint.fingerprint_index["echoprint"] = {
+    "dbmodel": EchoprintModel,
     "instance": Echoprint
 }
 
 db.create_tables()
 
-if __name__ == "__main__":
-    import sys
-    if len(sys.argv) > 1 and sys.argv[1] == "-d":
-        echoprint_support.fp.erase_database(True)
-        db.session.query(EchoprintModel).delete()
-        db.session.commit()
-    else:
-        print "run with -d to delete solr and tyrant and temp database"

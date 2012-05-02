@@ -14,8 +14,20 @@ Optional requirements: installations of fingerprint algorithms
 * Echoprint
 * Landmark fungerprinting
 * Ke vision FP
+* Chromaprint
 
-License: BSD 2-clause
+Echoprint notes:
+----------------
+
+To start the servers:
+
+    cd echoprint-server/solr/solr
+    java -jar solr.jar
+    ttserver -host localhost -port 1978 echoprint-tt.tch
+
+License
+-------
+BSD 2-clause
 
 To run the stuff:
 
@@ -36,12 +48,12 @@ Import each file with all of the fingerprinters with each FP engine.
 
 You can choose just a single fingerprint type:
 
-    python ingest.py -e echoprint
+    python ingest.py -f echoprint
 
 The import script will incrementally import all files
 for the engine. To delete the already imported files, use
 
-    python ingest.py -d [-e echoprint]
+    python ingest.py -d [-f echoprint]
 
 Note that this does not remove any databases that the fingerprint
 system might use. You need to do that yourself. Builtin fp's
