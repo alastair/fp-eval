@@ -1,0 +1,52 @@
+Code Overview
+
+Yan Ke
+
+August 6, 2004
+
+This program requires the FFTW3 library, available at fftw.org
+
+mrserver.cc:
+Frontend.  Server for music retrieval demo.  Accepts TCP/IP connects
+on port 2000.  Takes in wave files, outputs song names. 
+
+builddb.cc:
+Frontend.  Given a list of files of keys, builds a database of keys on
+disk using keypointdb.cc.
+
+codewav.cc:
+Frontend.  Converts a wave file into bit representation.
+
+
+align.cc:
+Aligns recorded audio with original audio.  Used for EM training.
+
+emverifytrain.cc:
+Given aligned key pairs, learns the EM parameters of our occlusion and
+noise model.
+
+sigproc.h and sigproc.cc:
+Most of the code for signal processing.
+
+verify4.cc and verify4em.cc:
+Verification stage.  Given a bunch of matches, make sure the keys are
+aligned temporally.  verify4.cc uses BER distance and RANSAC.
+verify4em.cc uses EM learned parameters and RANSAC and Maximum
+likelihood ratio test.  BER distance is much faster.  EM approach is
+more principled, although in practice does not perform significantly
+better. Other verify?.cc are old algorithms and are not currently used.
+
+directhash.cc and directhash2.cc:
+Builds a direct hash table in memory of all of the keys in database.
+directhash.cc flips 0 or 1 bits when looking up keys in keypoint
+database hash table.  directhash2.cc flips up to 2 bits when
+searching.  Flipping 2 bits gives better performance, but is slightly
+slower. 
+
+keypointdb.cc and keypointdb.h:
+Manages the database of keypoints on disk.  Lays out keys linearly.
+
+
+csapp.cc and csapp.h:
+CSAPP Library by Randal E. Bryant and David R. O'Hallaron.
+Visit http://csapp.cs.cmu.edu/
