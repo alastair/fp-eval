@@ -1,15 +1,21 @@
 #!/usr/bin/python
 
-import conf
 import fingerprint
-import echoprint
 import db
+import log
+import conf
 
 import sys
+import importlib
 
-import logging
-
-logging.basicConfig(filename='fingerprint.log', filemode='w', level=logging.DEBUG)
+def import_fp():
+    mod = conf.conf.get("modules", "module")
+    mods = mod.split(",")
+    for m in mods:
+        try:
+            importlib.import_module(m)
+        except ImportError, e:
+            log.warning("Cannot find module %s to import" % m)
 
 def delete(engine):
     """ Call the delete-specific method for a fingerprint engine to
@@ -22,9 +28,7 @@ def delete(engine):
     instance = engine_class()
     instance.delete_all()
 
-#XXX: Logging
 #XXX: Don't want to continually fingerprint files that had errors
-#XXX: Don't fingerprint the holdback set
 def main(engine):
     engine_map = fingerprint.fingerprint_index.get(engine)
     engine_class = engine_map.get("instance") if engine_map else None
@@ -34,13 +38,12 @@ def main(engine):
 
     instance = engine_class()
 
-    print "Importing files for engine %s" % (engine)
+    log.info("Importing files for engine %s" % (engine))
     print_list = []
-    cur = db.session.query(db.FPFile).outerjoin(engine_table)\
-        .filter(engine_table.file_id == None)
-    print "got %d things to do stuff with" % cur.count()
+    cur = db.session.query(db.FPFile).filter(db.FPFile.negative == False)\
+            .outerjoin(engine_table).filter(engine_table.file_id == None)
+    log.info("got %d things to do stuff with" % cur.count())
     for f in cur:
-        print ".",
         (trackid, fpdata) = instance.fingerprint(f.path)
         error = "error" in fpdata
         if not error:
@@ -48,12 +51,11 @@ def main(engine):
             db.session.add(e)
             print_list.append(fpdata)
         else:
-            print "Error:"
-            print fpdata["error"]
+            log.debug("Error parsing file %s. Error was: %s" % (f, fpdata["error"]))
 
         # Ingest every 100 songs
         if len(print_list) > 99:
-            print "got 100!"
+            log.info("Ingesting 100 files at once")
             db.session.commit()
             instance.ingest_all(print_list)
             print_list = []
@@ -63,8 +65,8 @@ def show_fp_engines():
     print ", ".join(fingerprint.fingerprint_index.keys())
 
 if __name__ == "__main__":
-    import sys
     import argparse
+    import_fp()
 
     p = argparse.ArgumentParser()
     g = p.add_argument_group()
