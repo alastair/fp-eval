@@ -8,14 +8,14 @@ import conf
 import sys
 import importlib
 
-def import_fp():
+def import_fp_modules():
     mod = conf.conf.get("modules", "module")
     mods = mod.split(",")
     for m in mods:
         try:
             importlib.import_module(m)
         except ImportError, e:
-            log.warning("Cannot find module %s to import" % m)
+            log.warning("Error when importing module %s" % m)
 
 def delete(engine):
     """ Call the delete-specific method for a fingerprint engine to
@@ -39,7 +39,7 @@ def main(engine):
     instance = engine_class()
 
     log.info("Importing files for engine %s" % (engine))
-    print_list = []
+    fp_list = []
     cur = db.session.query(db.FPFile).filter(db.FPFile.negative == False)\
             .outerjoin(engine_table).filter(engine_table.file_id == None)
     log.info("got %d things to do stuff with" % cur.count())
@@ -49,7 +49,7 @@ def main(engine):
         if not error:
             e = engine_table(f, trackid)
             db.session.add(e)
-            print_list.append(fpdata)
+            fp_list.append(fpdata)
         else:
             log.debug("Error parsing file %s. Error was: %s" % (f, fpdata["error"]))
 
@@ -57,8 +57,8 @@ def main(engine):
         if len(print_list) > 99:
             log.info("Ingesting 100 files at once")
             db.session.commit()
-            instance.ingest_all(print_list)
-            print_list = []
+            instance.ingest_many(fp_list)
+            fp_list = []
 
 def show_fp_engines():
     print "Available fingerprinting engines:"
@@ -66,7 +66,7 @@ def show_fp_engines():
 
 if __name__ == "__main__":
     import argparse
-    import_fp()
+    import_fp_modules()
 
     p = argparse.ArgumentParser()
     g = p.add_argument_group()
