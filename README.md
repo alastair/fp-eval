@@ -80,3 +80,25 @@ database to map from file->fingerprint code.
 fill in the fingerprint.fp\_index dict with information on your model.
 
 See the example file: examplefp.py to see what to do.
+
+
+Acoustid
+--------
+Install pymad or ffmpeg
+
+Set up acoustid server
+mbslave
+acoustid-index: https://github.com/lalinsky/acoustid-index
+      depends: libqt4-dev, libicu-dev
+
+To see the acoustid server:
+https://132.206.14.136
+api base url: https://132.206.14.136/ws/v2/
+
+Get API Key, login with google @gmail
+
+You have an API key, and an application key
+API: 0bB2HTpl
+Application: PKlUB2YR
+
+
