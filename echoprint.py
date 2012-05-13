@@ -33,7 +33,7 @@ class EchoprintModel(db.Base):
         self.trid = trid
 
     def __repr__(self):
-        return "Echoprint<%s, id=%s>" % (file_id, trid)
+        return "Echoprint<%s, id=%s>" % (self.file_id, self.trid)
 
 class Echoprint(fingerprint.Fingerprinter):
 
@@ -63,18 +63,18 @@ class Echoprint(fingerprint.Fingerprinter):
         code = p.communicate()[0]
         return json.loads(code)
 
-    def ingest(self, data):
-        echoprint_support.fp.ingest(data)
+    def ingest_single(self, data):
+        echoprint_support.fp.ingest(data, do_commit=True)
 
-    def ingest_all(self, data):
+    def ingest_many(self, data):
         # echoprint ingest will take a list then commit
         echoprint_support.fp.ingest(data, do_commit=True)
 
     def lookup(self, file):
         data = self._codegen(file)
-        code = data["code"]
+        code = data[0]["code"]
         match = echoprint_support.fp.best_match_for_query(code)
-        return match
+        return match.TRID
 
     def delete_all(self):
         # Erase solr and tokyo tyrant

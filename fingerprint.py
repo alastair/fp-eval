@@ -9,23 +9,29 @@ class Fingerprinter(object):
         pass
 
     def fingerprint(self, file):
+        """ Fingerprint a file and return a tuple (fp, data)
+            where fp is a unique fp identifier and data is an
+            object suitable to be imported with ingest. """
         raise NotImplementedError()
 
     def lookup(self, file):
+        """ Look up a file and return the unique fp identifier """
         raise NotImplementedError()
 
-    def ingest_all(self, data):
+    def ingest_single(self, data):
+        """ Ingest a single datapoint. data should
+            be in a format that the fp understands
+        """
         raise NotImplementedError()
 
-    def _create_table(self):
+    def ingest_many(self, data):
+        """ Bulk import a list of data. May loop through data
+            and do ingest single, or may do a bulk import
+        """
         raise NotImplementedError()
-
-    def _fp_all(self):
-        raise NotImplementedError()
-        # Get list of files not already added
-        # FP individual file
-        # Add to database - unique identifier
-        # Also get metadata if it supports it
 
     def delete_all(self):
+        """ Delete all entries from the local database table
+            and also any external stores
+        """
         raise NotImplementedError()
