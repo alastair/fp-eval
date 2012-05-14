@@ -25,6 +25,29 @@ To start the servers:
     java -jar solr.jar
     ttserver -host localhost -port 1978 echoprint-tt.tch
 
+Acoustid / Chromaprint
+----------------------
+Install pymad or ffmpeg
+
+Set up acoustid server
+mbslave
+acoustid-index: https://github.com/lalinsky/acoustid-index
+      depends: libqt4-dev, libicu-dev
+
+To see the acoustid server:
+https://132.206.14.136
+api base url: https://132.206.14.136/ws/v2/
+
+Get API Key, login with google @gmail
+
+You have an API key, and an application key
+API: 0bB2HTpl
+Application: PKlUB2YR
+
+A fingerprint ingest goes into the `submission' table
+
+run the admin/cron/import.sh script to ingest into the main database.
+
 License
 -------
 BSD 2-clause
@@ -81,24 +104,5 @@ fill in the fingerprint.fp\_index dict with information on your model.
 
 See the example file: examplefp.py to see what to do.
 
-
-Acoustid
---------
-Install pymad or ffmpeg
-
-Set up acoustid server
-mbslave
-acoustid-index: https://github.com/lalinsky/acoustid-index
-      depends: libqt4-dev, libicu-dev
-
-To see the acoustid server:
-https://132.206.14.136
-api base url: https://132.206.14.136/ws/v2/
-
-Get API Key, login with google @gmail
-
-You have an API key, and an application key
-API: 0bB2HTpl
-Application: PKlUB2YR
 
 
