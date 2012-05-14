@@ -3,6 +3,7 @@ import db
 import sqlalchemy
 import conf
 import eyeD3
+import uuid
 
 from chromaprint_support import acoustid
 
@@ -40,31 +41,31 @@ class Chromaprint(fingerprint.Fingerprinter):
         album = tag.getAlbum()
         title = tag.getTitle()
         track = tag.getTrackNum()
+        if isinstance(track, tuple):
+            track = track[0]
 
-        fpid = "x"
+        u = uuid.uuid4()
+        fpid = str(u)
         data = {"duration": "%d" % int(duration),
                 "fingerprint": fp,
 
                 "artist": artist,
                 "album": album,
                 "track": title,
-                "trackno": track
+                "trackno": "%d" % track,
+                "mbid": fpid
                }
         return (fpid, data)
 
     def ingest_single(self, data):
-        """    ``fingerprint`` key and a ``duration`` key and may include the
-            following: ``puid``, ``mbid``, ``track``, ``artist``, ``album``,
-                ``albumartist``, ``year``, ``trackno``, ``discno``, ``fileformat``,
-                    ``bitrate``
-        """
         acoustid.submit(app_key, api_key, data)
 
     def ingest_many(self, data):
         acoustid.submit(app_key, api_key, data)
 
     def lookup(self, file):
-        acoustid.match(api_key, file)
+        m = acoustid.match(app_key, file, parse=False)
+        return m
 
     def delete_all(self):
         # Delete the chromaprint database
