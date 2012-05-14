@@ -3,7 +3,7 @@ munge_classes = {}
 
 class Munge(object):
     def perform(self, fromfile, tofile):
-        raise Exception("must implement perform(self)")
+        raise NotImplementedError("must implement perform(self)")
 
 class NoMunge(Munge):
     """ No Munge """

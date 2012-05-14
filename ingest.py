@@ -8,15 +8,6 @@ import conf
 import sys
 import importlib
 
-def import_fp_modules():
-    mod = conf.conf.get("modules", "module")
-    mods = mod.split(",")
-    for m in mods:
-        try:
-            importlib.import_module(m)
-        except ImportError, e:
-            log.warning("Error when importing module %s" % m)
-
 def delete(engine):
     """ Call the delete-specific method for a fingerprint engine to
         remove all traces of it from this eval test, and from
@@ -66,7 +57,7 @@ def show_fp_engines():
 
 if __name__ == "__main__":
     import argparse
-    import_fp_modules()
+    conf.import_fp_modules()
 
     p = argparse.ArgumentParser()
     g = p.add_argument_group()
