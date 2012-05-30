@@ -1,11 +1,14 @@
 #!/usr/bin/python
 
+# Use simple-ingest to quickly add a file to an engine's table and the reference database.
+
 import sys
 import os
 
 import db
 import echoprint
 import chromaprint
+import landmark
 
 def main(engine, files):
     if engine == "echoprint":
@@ -14,6 +17,10 @@ def main(engine, files):
     elif engine == "chromaprint":
         fp = chromaprint.Chromaprint()
         model = chromaprint.ChromaprintModel
+    elif engine == "landmark":
+        fp = landmark.Landmark()
+        model = landmark.LandmarkModel
+
     for f in files:
         (fpid, data) = fp.fingerprint(f)
         fp.ingest_single(data)
@@ -36,6 +43,8 @@ def main(engine, files):
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
+        print >>sys.stderr, "Use simple_ingest to add some files to an engine and the local database"
         print >>sys.stderr, "Usage: %s engine files..." % sys.argv[0]
+        print >>sys.stderr, "Engine: landmark,chromaprint,echoprint
         sys.exit(1)
     main(sys.argv[1], sys.argv[2:])

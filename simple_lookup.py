@@ -1,11 +1,14 @@
 #!/usr/bin/python
 
+# Use simple-lookup as a quick way to see what a engine thinks a file's fingerprint is.
+
 import sys
 import os
 
 import db
 import echoprint
 import chromaprint
+import landmark
 
 def lookup(engine, file):
     if engine == "echoprint":
@@ -14,6 +17,9 @@ def lookup(engine, file):
     elif engine == "chromaprint":
         fp = chromaprint.Chromaprint()
         model = chromaprint.ChromaprintModel
+    elif engine == "landmark":
+        fp = landmark.Landmark()
+        model = landmark.LandmarkModel
 
     full_path = os.path.abspath(file)
     cur = db.session.query(db.FPFile).filter(db.FPFile.path == full_path)
@@ -35,6 +41,9 @@ def lookup(engine, file):
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:
+        print >>sys.stderr, "Use simple_lookup to see what a FP thinks a file's ID is"
+        print >>sys.stderr, "and what the database thinks it should be. Use with simple_ingest.py"
         print >>sys.stderr, "Usage: %s engine file" % sys.argv[0]
+        print >>sys.stderr, "Engine: landmark,chromaprint,echoprint
         sys.exit(1)
     lookup(sys.argv[1], sys.argv[2])
