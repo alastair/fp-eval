@@ -15,8 +15,8 @@ ch = logging.StreamHandler()
 ch.setLevel(logging.INFO)
 logger.addHandler(ch)
 
-# If you import the logger, it'll put a header
-#  of the file that is running
+# If you import the logger and run a file, the logger will
+# start with a message of what file is running
 logger.debug("=" * 40)
 logger.debug("Running %s" % sys.argv[0])
 logger.debug("=" * 40)
