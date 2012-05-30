@@ -18,43 +18,78 @@ import sys
 import argparse
 import datetime
 
+class Testset(db.Base):
+    """ A testset is an identifier for a collection of files that are used in an evaluation """
+    __tablename__ = "testset"
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    name = sqlalchemy.Column(sqlalchemy.String)
+    created = sqlalchemy.Column(sqlalchemy.DateTime)
+
+    def __init__(self, name):
+        self.name = name
+        now = datetime.datetime.now()
+        now.microsecond = 0
+        self.created = now
+
+    def __repr__(self):
+        return "<Testset(id=%d, name=%s, created=%s)>" % (self.id, self.name, self.created)
+
+class Testfile(db.Base):
+    """ A testfile links together a testset and a file """
+    __tablename__ = "testfile"
+    id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    testset = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testset.id'))
+    file = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'))
+
+    def __init__(self, testset, file):
+        self.testset = testset
+        self.file = file
+
+    def __repr__(self):
+        return "<Testfile(id=%d, testset=%d, file=%d)>" % (self.id, self.testset, self.file)
+
 class Run(db.Base):
-    """ A run is a combination of testset files, a munger, and a fingerprint algorithm. """
+    """ A run links together a testset, a munger (or set of), and a fingerprint algorithm. """
     __tablename__ = "run"
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
+    # the testset listing all the files that should be tested in this run
+    testset = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testset.id'))
     # A list of munge classes
     munge = sqlalchemy.Column(sqlalchemy.String)
     # The fp algorithm to use
     engine = sqlalchemy.Column(sqlalchemy.String)
-    # The date this run was performed
-    time = sqlalchemy.Column(sqlalchemy.DateTime)
+    # The date this run was created
+    created = sqlalchemy.Column(sqlalchemy.DateTime)
+    #started
+    started = sqlalchemy.Column(sqlalchemy.DateTime)
+    # finished (there's a result for each testfile)
+    finished = sqlalchemy.Column(sqlalchemy.DateTime)
 
-    def __init__(self, munge, engine):
-        # XXX: Check munges are valid
-        # XXX: Check engine is valid
+    def __init__(self, testset, munge, engine):
+        self.testset = testset
         self.munge = munge
         self.engine = engine
         now = datetime.datetime.now()
         now.microsecond = 0
-        self.time = now
+        self.created = now
+        self.started = None
+        self.finished = None
 
     def __repr__(self):
-        return "<Run(engine=%s, munge=%s, date=%s)>" % (self.engine, self.munge, self.time)
+        return "<Run(id=%d, testset=%d, engine=%s, munge=%s, created=%s, started=%s, finished=%s)>" % \
+            (self.id, self.testset, self.engine, self.munge, self.created, self.started, self.finished)
 
-
-class Evaluation(db.Base):
-    """ A row for every testset file * run
-        The intent is that when you create an evaluation you
-        make all of the rows with done=False, then
-        as they are fingerprinted, write the result and update done"""
-    __tablename__ = "evaluation"
+class Result(db.Base):
+    """ A row for every testset file for a run """
+    __tablename__ = "result"
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    run_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('run.id'))
-    file_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'))
-    done = sqlalchemy.Column(sqlalchemy.Boolean)
+    run = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('run.id'))
+    testfile = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testfile.id'))
     result = sqlalchemy.Column(sqlalchemy.String)
+    fptime = sqlalchemy.Column(sqlalchemy.Integer)
+    lookuptime = sqlalchemy.Column(sqlalchemy.Integer)
 
     def __init__(self, run, file):
         if isinstance(run, Run):
@@ -68,7 +103,7 @@ class Evaluation(db.Base):
         self.result = None
 
     def __repr__(self):
-        return "<Evaluation(run=%d, d=%d, res=%s)>" % (self.run_id, self.done, self.result)
+        return "<Result(run=%d, d=%d, res=%s)>" % (self.run_id, self.done, self.result)
 
 db.create_tables()
 
@@ -111,6 +146,17 @@ def show_fp_engines():
     print ", ".join(fingerprint.fingerprint_index.keys())
 
 if __name__ == "__main__":
+    """
+    commands:
+    testset -c -n "foo" - create a testset
+    testset -l - list all testsets
+
+    makerun -t 1 -e echoprint -m "start10,noise30"
+    make a run using testset 1, echoprint, and 2 munges
+
+    run -l -- list all available runs (also the status of them? - or -s 1)
+    run 1 -- execute run 1
+    """
     p = argparse.ArgumentParser()
     g = p.add_argument_group()
 
