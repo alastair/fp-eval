@@ -8,13 +8,15 @@ Requirements
 * To perform query alterations:
 ** mpg123
 ** ffmpeg
+** sox
 
 Optional requirements: installations of fingerprint algorithms
 
 * Echoprint
 * Landmark fungerprinting
-* Ke vision FP
 * Chromaprint
+
+* Ke vision FP
 
 Echoprint notes:
 ----------------
@@ -25,14 +27,14 @@ To start the servers:
     java -jar solr.jar
     ttserver -host localhost -port 1978 echoprint-tt.tch
 
-Acoustid / Chromaprint
-----------------------
+Acoustid / Chromaprintb notes
+-----------------------------
 Install pymad or ffmpeg
 
-Set up acoustid server
-mbslave
-acoustid-index: https://github.com/lalinsky/acoustid-index
-      depends: libqt4-dev, libicu-dev
+Set up
+* acoustid server
+* mbslave
+* acoustid-index: https://github.com/lalinsky/acoustid-index (depends: libqt4-dev, libicu-dev)
 
 To see the acoustid server:
 https://132.206.14.136
@@ -46,13 +48,16 @@ Application: PKlUB2YR
 
 A fingerprint ingest goes into the `submission' table
 
+To clean out the database, you need to remove an entry from the fingerprint table. Remove
+all foreign key constraints and then it'll be empty
+
 run the admin/cron/import.sh script to ingest into the main database.
 
-License
--------
-BSD 2-clause
+Landmark notes
+--------------
 
 To run the stuff:
+-----------------
 
 Configuration:
 
@@ -86,6 +91,9 @@ do this with
     python ke.py -d
 
 Development:
+------------
+
+(out of date)
 
 To create a new module:
 create a python file e.g. `myfp.py`. You may want to create a myfp\_support
@@ -93,16 +101,18 @@ directory to put additional dependencies in
 
 Make a class inside myfp.py that inherits from the Fingerprint class in
 fingerprint.py
-set the \_\_provides member to a short name for your fingerprint
+set the ```__provides``` member to a short name for your fingerprint
 engine. This is what you refer to it with in the configuration file.
 
 Ensure you override the fingerprint(file), ingest(data), and lookup(file)
 methods.
 Create a class that inherits from db.Base in order to create a reference
 database to map from file->fingerprint code.
-fill in the fingerprint.fp\_index dict with information on your model.
+fill in the ```fingerprint.fp_index``` dict with information on your model.
 
 See the example file: examplefp.py to see what to do.
 
-
+License
+-------
+BSD 2-clause
 
