@@ -1,10 +1,8 @@
 
 import munge
 
-# XXX: Reproducability - want to create a "dataset", that is all the files we want to test
-# Then create a "run" - combination of dataset, munge chain, fingerprint algorithm
-# A comparison is a dataset, munge and all fp algorithms.
-# Save the results so that we can 1) continue if things fail, 2) reproduce, 3) get stats.
+# XXX: Time that a fingerprint takes to run?
+# XXX: Time that a lookup takes to run
 
 # Collect a random sampling of songs
 # Look up the expected fingerprint
@@ -79,6 +77,9 @@ def create_run(engine, munge):
     db.session.add(run)
     db.session.commit()
     # XXX: Get run id
+
+    # XXX: A run needs to be over all fingerprint types
+    # Because we want the same files for all engines
 
     files = db.session.query(db.FPFile).all()
     # Randomise

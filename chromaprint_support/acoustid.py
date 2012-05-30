@@ -326,7 +326,8 @@ def submit(apikey, userkey, data):
     ``fingerprint`` key and a ``duration`` key and may include the
     following: ``puid``, ``mbid``, ``track``, ``artist``, ``album``,
     ``albumartist``, ``year``, ``trackno``, ``discno``, ``fileformat``,
-    ``bitrate``
+    ``bitrate``.
+    All parameters must be strings
 
     If the required keys are not present in a dictionary, a
     FingerprintSubmissionError is raised.
