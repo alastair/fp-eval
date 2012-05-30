@@ -7,12 +7,12 @@ import uuid
 
 from chromaprint_support import acoustid
 
-if not conf.conf.has_section("chromaprint"):
+if not conf.has_section("chromaprint"):
     raise Exception("No chromaprint configuration section present")
 
-s = conf.conf.get("chromaprint", "server")
-app_key = conf.conf.get("chromaprint", "app_key")
-api_key = conf.conf.get("chromaprint", "api_key")
+s = conf.get("chromaprint", "server")
+app_key = conf.get("chromaprint", "app_key")
+api_key = conf.get("chromaprint", "api_key")
 
 acoustid.API_BASE_URL = s
 # No rate-limiting
@@ -69,6 +69,8 @@ class Chromaprint(fingerprint.Fingerprinter):
 
     def delete_all(self):
         # Delete the chromaprint database
+        # XXX: Need to connect to postgres
+        # XXX: postgres database needs to be accessible from this machine.
 
         # Delete the local database
         db.session.query(ChromaprintModel).delete()

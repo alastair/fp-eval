@@ -3,12 +3,20 @@ path: /Users/alastairlocal/Codiach/Popular
 negatives: 10
 
 [modules]
-module: echoprint
+module: echoprint, chromaprint, landmark
 
 [echoprint]
 solr_server: localhost
 tyrant_host: localhost
 tyrant_port: 1970
+codegen_path: /home/alastair/code/echoprint-codegen/echoprint-codegen
 
-[munge]
-munge: sox
+[chromaprint]
+server: https://132.206.14.136/ws/v2/
+api_key: 0bB2HTpl
+app_key: PKlUB2YR
+
+[landmark]
+matlab_path: matlab
+landmark_dir: /home/alastair/code/fp-eval/landmark_support
+

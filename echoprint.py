@@ -10,16 +10,16 @@ import conf
 import echoprint_support.fp
 import echoprint_support.solr
 
-if not conf.conf.has_section("echoprint"):
+if not conf.has_section("echoprint"):
     raise Exception("No echoprint configuration section present")
 
-s = conf.conf.get("echoprint", "solr_server")
-th = conf.conf.get("echoprint", "tyrant_host")
-tp = conf.conf.getint("echoprint", "tyrant_port")
+s = conf.get("echoprint", "solr_server")
+th = conf.get("echoprint", "tyrant_host")
+tp = conf.getint("echoprint", "tyrant_port")
 echoprint_support.fp._fp_solr = echoprint_support.solr.SolrConnectionPool(s)
 echoprint_support.fp._tyrant_address = [th, tp]
 
-codegen_path = conf.conf.get("echoprint", "codegen_path")
+codegen_path = conf.get("echoprint", "codegen_path")
 
 class EchoprintModel(db.Base):
     __tablename__ = "echoprint"
