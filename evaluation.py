@@ -1,18 +1,11 @@
 
 import munge
-
-# XXX: Time that a fingerprint takes to run?
-# XXX: Time that a lookup takes to run
-
-# Collect a random sampling of songs
-# Look up the expected fingerprint
-# Optionally perform a munge
-# Do a lookup
-# See what the result is
-# Store result
+import fingerprint
+import conf
 
 import db
 import sqlalchemy
+import random
 
 import sys
 import argparse
@@ -28,7 +21,7 @@ class Testset(db.Base):
     def __init__(self, name):
         self.name = name
         now = datetime.datetime.now()
-        now.microsecond = 0
+        now = now.replace(microsecond=0)
         self.created = now
 
     def __repr__(self):
@@ -67,11 +60,17 @@ class Run(db.Base):
     finished = sqlalchemy.Column(sqlalchemy.DateTime)
 
     def __init__(self, testset, munge, engine):
+        if not isinstance(testset, int):
+            raise Exception("testset not set")
+        if not munge:
+            raise Exception("munge not set")
+        if not engine:
+            raise Exception("engine not set")
         self.testset = testset
         self.munge = munge
         self.engine = engine
         now = datetime.datetime.now()
-        now.microsecond = 0
+        now = now.replace(microsecond=0)
         self.created = now
         self.started = None
         self.finished = None
@@ -124,7 +123,48 @@ def create_run(engine, munge):
         db.session.add(eval)
     db.session.commit()
 
-def perform_run(run_id):
+
+def create_testset(name, size, holdback):
+    if holdback is None:
+        files = db.session.query(db.FPFile).all()
+        random.shuffle(files)
+        todo = files[:size]
+    else:
+        num = size - holdback
+        files = db.session.query(db.FPFile).filter(db.FPFile.negative == False)
+        random.shuffle(files)
+        todo = files[:num]
+        neg = db.session.query(db.FPFile).filter(db.FPFile.negative == True)
+        random.shuffle(neg)
+        todo.extend(neg[:holdback])
+
+    testset = Testset(name)
+    db.session.add(testset)
+    db.session.flush()
+    for i in todo:
+        file = Testfile(testset.id, i.id)
+        db.session.add(file)
+    db.session.commit()
+
+def list_testsets():
+    tsets = db.session.query(Testset).all()
+    for t in tsets:
+        i = t.id
+        f = db.session.query(Testfile).filter(Testfile.testset == i)
+        count = f.count()
+        print "%d: %d files" % (i, count)
+
+def make_run(testset, fp, munge):
+    run = Run(testset, munge, fp)
+    db.session.add(run)
+    db.session.commit()
+
+def list_runs():
+    runs = db.session.query(Run).all()
+    for r in runs:
+        print r
+
+def execute_run(run):
     run = db.session.query(Run).filter(Run.id == run_id).one()
     evals = db.session.query(Evaluation).filter(Evaluation.run_id == run.id).filter(Evaluation.done == False).all()
     # Make the fp instance based on the run
@@ -139,16 +179,19 @@ def perform_run(run_id):
     db.session.commit()
 
 def show_munge():
-    print ", ".join(munge.munge_classes.keys())
+    print ", ".join(sorted(munge.munge_classes.keys()))
 
 def show_fp_engines():
+    conf.import_fp_modules()
     print "Available fingerprinting engines:"
     print ", ".join(fingerprint.fingerprint_index.keys())
 
 if __name__ == "__main__":
     """
     commands:
-    testset -c -n "foo" - create a testset
+    testset -c -n "foo" -s S -b B - create a testset of size S
+                    if B is set, then B of the S are not in the database,
+                    otherwise, the amount of 'new queries' is random
     testset -l - list all testsets
 
     makerun -t 1 -e echoprint -m "start10,noise30"
@@ -158,27 +201,50 @@ if __name__ == "__main__":
     run 1 -- execute run 1
     """
     p = argparse.ArgumentParser()
-    g = p.add_argument_group()
+    sub = p.add_subparsers(dest='subparser')
+    test = sub.add_parser("testset", help="create and show test sets")
+    mex = test.add_mutually_exclusive_group(required=True)
+    mex.add_argument("-c", action="store_true", help="create a testset")
+    test.add_argument("-n", help="name of the testset")
+    test.add_argument("-s", type=int, help="size of the testset")
+    test.add_argument("-b", type=int, help="if set, guarantee that at least B files in the test set aren't in the FP database")
+    mex.add_argument("-l", action="store_true", help="list all testsets")
 
-    g.add_argument("-n", help="Number of files to test")
-    g.add_argument("-m", "--munge", help="The method to use to modify input files")
-    g.add_argument("-f", help="Fingerprint algorithm to use")
-    g.add_argument("--show-engines", action="store_true", help="Show all fingerprint engines available")
-    g.add_argument("--show-munge", action="store_true", help="List munge methods")
-    # XXX: What about false positive files? Specify how many of them to test?
+    mkrun = sub.add_parser("makerun", help="make a run")
+    mkrun.add_argument("-t", type=int, help="The testset to use for this run")
+    mkrun.add_argument("-f", help="Fingerprint algorithm to use")
+    mkrun.add_argument("-m", help="comma separated list of munges to run (in order)")
+    mkrun.add_argument("--show-engines", action="store_true", help="Show all fingerprint engines available")
+    mkrun.add_argument("--show-munge", action="store_true", help="List munge methods")
+
+    run = sub.add_parser("run", help="run an evaluation")
+    run = run.add_mutually_exclusive_group(required=True)
+    run.add_argument("-l", action="store_true", help="list all available runs")
+    run.add_argument("r", type=int, help="execute run R", nargs="?")
 
     args = p.parse_args()
 
-    if args.show_munge:
-        show_munge()
-        sys.exit(1)
-
-    if args.show_engines:
-        show_fp_engines()
-        sys.exit(1)
-
-    if not args.f or not args.m:
-        p.print_help()
-        sys.exit(1)
-
-    main()
+    if args.subparser == "testset":
+        if args.c:
+            name = args.n
+            size = args.s
+            holdback = args.b
+            create_testset(name, size, holdback)
+        elif args.l:
+            list_testsets()
+    elif args.subparser == "makerun":
+        if args.show_munge:
+            show_munge()
+        elif args.show_engines:
+            show_fp_engines()
+        else:
+            testset = args.t
+            fp = args.f
+            munge = args.m
+            make_run(testset, fp, munge)
+    elif args.subparser == "run":
+        if args.l:
+            list_runs()
+        elif args.r:
+            run = args.r
+            execute_run(run)
