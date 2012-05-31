@@ -1,4 +1,5 @@
 import ConfigParser
+import importlib
 
 conf = ConfigParser.RawConfigParser()
 conf.read('fingerprint.conf')

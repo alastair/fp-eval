@@ -17,7 +17,7 @@ class LandmarkModel(db.Base):
     def __repr__(self):
         return "Landmark<%s, id=%s>" % (self.file_id, self.trid)
 
-class Landmark(Fingerprint):
+class Landmark(fingerprint.Fingerprinter):
     def fingerprint(self, file):
         """ Fingerprint a file and return a tuple (fp, data)
             where fp is a unique fp identifier and data is an
@@ -49,7 +49,7 @@ class Landmark(Fingerprint):
         db.session.commit()
         # Delete the matlab reference
 
-fingerprint.fp_index["landmark"] = {
+fingerprint.fingerprint_index["landmark"] = {
         "dbmodel": LandmarkModel,
         "instance": Landmark
         }
