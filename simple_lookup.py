@@ -44,6 +44,6 @@ if __name__ == "__main__":
         print >>sys.stderr, "Use simple_lookup to see what a FP thinks a file's ID is"
         print >>sys.stderr, "and what the database thinks it should be. Use with simple_ingest.py"
         print >>sys.stderr, "Usage: %s engine file" % sys.argv[0]
-        print >>sys.stderr, "Engine: landmark,chromaprint,echoprint
+        print >>sys.stderr, "Engine: landmark,chromaprint,echoprint"
         sys.exit(1)
     lookup(sys.argv[1], sys.argv[2])

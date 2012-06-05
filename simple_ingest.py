@@ -45,6 +45,6 @@ if __name__ == "__main__":
     if len(sys.argv) < 3:
         print >>sys.stderr, "Use simple_ingest to add some files to an engine and the local database"
         print >>sys.stderr, "Usage: %s engine files..." % sys.argv[0]
-        print >>sys.stderr, "Engine: landmark,chromaprint,echoprint
+        print >>sys.stderr, "Engine: landmark,chromaprint,echoprint"
         sys.exit(1)
     main(sys.argv[1], sys.argv[2:])
