@@ -5,6 +5,7 @@ import conf
 
 import db
 import sqlalchemy
+from sqlalchemy.orm import relationship, backref
 import random
 
 import sys
@@ -31,15 +32,22 @@ class Testfile(db.Base):
     """ A testfile links together a testset and a file """
     __tablename__ = "testfile"
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    testset = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testset.id'))
-    file = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'))
+    testset_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testset.id'))
+    file_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'))
+
+    file = relationship(db.FPFile)
+    testset = relationship(Testset)
 
     def __init__(self, testset, file):
-        self.testset = testset
-        self.file = file
+        if isinstance(testset, Testset):
+            testset = testset.id
+        self.testset_id = testset
+        if isinstance(file, db.FPFile):
+            file = file.id
+        self.file_id = file
 
     def __repr__(self):
-        return "<Testfile(id=%d, testset=%d, file=%d)>" % (self.id, self.testset, self.file)
+        return "<Testfile(id=%d, testset=%d, file=%d)>" % (self.id, self.testset_id, self.file_id)
 
 class Run(db.Base):
     """ A run links together a testset, a munger (or set of), and a fingerprint algorithm. """
@@ -47,7 +55,7 @@ class Run(db.Base):
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     # the testset listing all the files that should be tested in this run
-    testset = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testset.id'))
+    testset_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testset.id'))
     # A list of munge classes
     munge = sqlalchemy.Column(sqlalchemy.String)
     # The fp algorithm to use
@@ -59,14 +67,16 @@ class Run(db.Base):
     # finished (there's a result for each testfile)
     finished = sqlalchemy.Column(sqlalchemy.DateTime)
 
+    testset = relationship(Testset)
+
     def __init__(self, testset, munge, engine):
-        if not isinstance(testset, int):
-            raise Exception("testset not set")
         if not munge:
             raise Exception("munge not set")
         if not engine:
             raise Exception("engine not set")
-        self.testset = testset
+        if isinstance(testset, Testset):
+            testset = testset.id
+        self.testset_id = testset
         self.munge = munge
         self.engine = engine
         now = datetime.datetime.now()
@@ -77,26 +87,27 @@ class Run(db.Base):
 
     def __repr__(self):
         return "<Run(id=%d, testset=%d, engine=%s, munge=%s, created=%s, started=%s, finished=%s)>" % \
-            (self.id, self.testset, self.engine, self.munge, self.created, self.started, self.finished)
+            (self.id, self.testset_id, self.engine, self.munge, self.created, self.started, self.finished)
 
 class Result(db.Base):
     """ A row for every testset file for a run """
     __tablename__ = "result"
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    run = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('run.id'))
-    testfile = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testfile.id'))
+    run_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('run.id'))
+    testfile_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testfile.id'))
     result = sqlalchemy.Column(sqlalchemy.String)
     fptime = sqlalchemy.Column(sqlalchemy.Integer)
     lookuptime = sqlalchemy.Column(sqlalchemy.Integer)
 
-    def __init__(self, run, file):
+    def __init__(self, run, testfile):
         if isinstance(run, Run):
             if run.id is None:
                 raise Exception("This run isn't committed: %s" % str(run))
             run = run.id
-        if isinstance(file, db.FPFile):
-            file = file.id
+        if isinstance(testfile, db.FPFile):
+            testfile = testfile.id
+        self.testfile_id = testfile
         self.run_id = run
         self.done = False
         self.result = None
@@ -141,18 +152,18 @@ def create_testset(name, size, holdback):
     testset = Testset(name)
     db.session.add(testset)
     db.session.flush()
-    for i in todo:
-        file = Testfile(testset.id, i.id)
-        db.session.add(file)
+    for fpfile in todo:
+        tfile = Testfile(testset, fpfile)
+        db.session.add(tfile)
     db.session.commit()
 
 def list_testsets():
     tsets = db.session.query(Testset).all()
     for t in tsets:
-        i = t.id
-        f = db.session.query(Testfile).filter(Testfile.testset == i)
-        count = f.count()
-        print "%d: %d files" % (i, count)
+        print "testset",t
+        handle = db.session.query(Testfile).filter(Testfile.testset == t)
+        count = handle.count()
+        print "%s: %d files" % (t.name, count)
 
 def make_run(testset, fp, munge):
     run = Run(testset, munge, fp)
@@ -194,7 +205,7 @@ if __name__ == "__main__":
                     otherwise, the amount of 'new queries' is random
     testset -l - list all testsets
 
-    makerun -t 1 -e echoprint -m "start10,noise30"
+    makerun -t 1 -f echoprint -m "start10,noise30"
     make a run using testset 1, echoprint, and 2 munges
 
     run -l -- list all available runs (also the status of them? - or -s 1)
