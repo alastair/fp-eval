@@ -1,16 +1,22 @@
+#!/usr/bin/python
 
 import munge
 import fingerprint
 import conf
+import log
 
 import db
 import sqlalchemy
 from sqlalchemy.orm import relationship, backref
 import random
+import operator
 
 import sys
 import argparse
 import datetime
+import os
+
+conf.import_fp_modules()
 
 class Testset(db.Base):
     """ A testset is an identifier for a collection of files that are used in an evaluation """
@@ -18,6 +24,8 @@ class Testset(db.Base):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     name = sqlalchemy.Column(sqlalchemy.String)
     created = sqlalchemy.Column(sqlalchemy.DateTime)
+
+    # testfiles <- list of all Testfiles
 
     def __init__(self, name):
         self.name = name
@@ -36,7 +44,7 @@ class Testfile(db.Base):
     file_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'))
 
     file = relationship(db.FPFile)
-    testset = relationship(Testset)
+    testset = relationship(Testset, backref="testfiles")
 
     def __init__(self, testset, file):
         if isinstance(testset, Testset):
@@ -68,6 +76,7 @@ class Run(db.Base):
     finished = sqlalchemy.Column(sqlalchemy.DateTime)
 
     testset = relationship(Testset)
+    # results <- list of results
 
     def __init__(self, testset, munge, engine):
         if not munge:
@@ -76,6 +85,7 @@ class Run(db.Base):
             raise Exception("engine not set")
         if isinstance(testset, Testset):
             testset = testset.id
+        munge = ",".join(map(operator.methodcaller("strip"), munge.split(",")))
         self.testset_id = testset
         self.munge = munge
         self.engine = engine
@@ -100,7 +110,16 @@ class Result(db.Base):
     fptime = sqlalchemy.Column(sqlalchemy.Integer)
     lookuptime = sqlalchemy.Column(sqlalchemy.Integer)
 
-    def __init__(self, run, testfile):
+    run = relationship(Run, backref="results")
+
+    def __init__(self, run, testfile, result, fptime, lookuptime):
+        """
+        run -- the run id
+        testfile -- a db file
+        result -- what the FP returns
+        fptime -- the time (in ms) taken to perform a fingerprint
+        lookuptime -- the time (in ms) taken to perform a lookup
+        """
         if isinstance(run, Run):
             if run.id is None:
                 raise Exception("This run isn't committed: %s" % str(run))
@@ -109,43 +128,29 @@ class Result(db.Base):
             testfile = testfile.id
         self.testfile_id = testfile
         self.run_id = run
-        self.done = False
-        self.result = None
+        self.result = result
 
     def __repr__(self):
-        return "<Result(run=%d, d=%d, res=%s)>" % (self.run_id, self.done, self.result)
+        return "<Result(run=%d, testfile=%d, result=%s)>" % (self.run_id, self.testfile_id, self.result)
 
 db.create_tables()
 
-def create_run(engine, munge):
-    run = Run(munge, engine)
-    db.session.add(run)
-    db.session.commit()
-    # XXX: Get run id
-
-    # XXX: A run needs to be over all fingerprint types
-    # Because we want the same files for all engines
-
-    files = db.session.query(db.FPFile).all()
-    # Randomise
-    # Choose how mnay to do
-    for f in files:
-        eval = Evaluation(run, f)
-        db.session.add(eval)
-    db.session.commit()
-
-
 def create_testset(name, size, holdback):
+    """
+    Randomly select `size' tracks from the file list and make a testset.
+    If `holdback' is set, make size-holdback positives and
+    holdback negatives. Otherwise randomly select size files.
+    """
     if holdback is None:
         files = db.session.query(db.FPFile).all()
         random.shuffle(files)
         todo = files[:size]
     else:
         num = size - holdback
-        files = db.session.query(db.FPFile).filter(db.FPFile.negative == False)
+        files = db.session.query(db.FPFile).filter(db.FPFile.negative == False).all()
         random.shuffle(files)
         todo = files[:num]
-        neg = db.session.query(db.FPFile).filter(db.FPFile.negative == True)
+        neg = db.session.query(db.FPFile).filter(db.FPFile.negative == True).all()
         random.shuffle(neg)
         todo.extend(neg[:holdback])
 
@@ -158,42 +163,139 @@ def create_testset(name, size, holdback):
     db.session.commit()
 
 def list_testsets():
+    """
+    List all the testsets that have been created, including
+    their size and composition of positive/negative files
+    """
     tsets = db.session.query(Testset).all()
     for t in tsets:
-        print "testset",t
         handle = db.session.query(Testfile).filter(Testfile.testset == t)
         count = handle.count()
-        print "%s: %d files" % (t.name, count)
+        poshandle = db.session.query(Testfile).filter(Testfile.testset == t).join(Testfile.file).filter(db.FPFile.negative == False)
+        poscount = poshandle.count()
+        neghandle = db.session.query(Testfile).filter(Testfile.testset == t).join(Testfile.file).filter(db.FPFile.negative == True)
+        negcount = neghandle.count()
+        print "%s (%d): %d files - %d positive, %d negative" % (t.name, t.id, count, poscount, negcount)
 
-def make_run(testset, fp, munge):
-    run = Run(testset, munge, fp)
+def create_run(testset, fp, mungename):
+    """
+    Make a run. A run is a testset with a specific fingerprinter.
+    Files are put through a list of munges before looked up in
+    the fingerprinter
+    """
+    if fp not in fingerprint.fingerprint_index.keys():
+        raise Exception("Unknown fingerprint name %s" % (fp))
+    munges = munge.munge_classes.keys()
+    for m in mungename.split(","):
+        m = m.strip()
+        if m not in munges:
+            raise Exception("Unknown munge %s" % (m))
+    testset = int(testset)
+    tscursor = db.session.query(Testset).filter(Testset.id == testset)
+    if tscursor.count() == 0:
+        raise Exception("Testset %d not in database" % testset)
+    run = Run(testset, mungename, fp)
     db.session.add(run)
     db.session.commit()
 
 def list_runs():
+    """
+    List all the runs in the database
+    """
     runs = db.session.query(Run).all()
     for r in runs:
         print r
 
-def execute_run(run):
-    run = db.session.query(Run).filter(Run.id == run_id).one()
-    evals = db.session.query(Evaluation).filter(Evaluation.run_id == run.id).filter(Evaluation.done == False).all()
-    # Make the fp instance based on the run
-    for e in evals:
-        f = e.file_id
-        # Perform the munge
-        #do the lookup
-        e.result = res
-        db.session.add(e)
+def munge_file(file, munges):
+    """ apply a list of munges to `file' and return a path
+    to a file to read in
+    """
+    if not isinstance(munges, list):
+        munges = map(operator.methodcaller("strip"), munges.split(","))
 
-    # Commit every n
+    newfile = file
+    #XXX: If no munge, newfile is same as infile.
+    for m in munges:
+        # XXX: Remove intermediate files
+        cls = munge.munge_classes[m]
+        inst = cls()
+        tmpfile = inst.perform(newfile)
+        remove_file(newfile)
+        newfile = tmpfile
+
+    return newfile
+
+def remove_file(file):
+    print "remove file", file
+    #os.unlink(file)
+    pass
+
+def execute_run(run_id):
+    """
+    Execute a run.
+
+    This does most of the magic. 
+
+    Get all the testfiles in which for this run's testset that have not been evaluated
+
+    """
+    run = db.session.query(Run).filter(Run.id == run_id)
+    if run.count() == 0:
+        raise Exception("No run with this id")
+    else:
+        run = run.one()
+
+    if run.started is None:
+        now = datetime.datetime.now()
+        now = now.replace(microsecond=0)
+        run.started = now
+    db.session.add(run)
+
+    engine = run.engine
+    munges = run.munge
+    fpclass = fingerprint.fingerprint_index[engine]
+    fp = fpclass["instance"]()
+    # All files that are part of this testset
+    # That don't already have a result
+    testfiles = db.session.query(Testfile)\
+                    .join(Testset)\
+                    .outerjoin(Result)\
+                    .filter(Testset.id == run.testset_id)\
+                    .filter(Result.id == None)
+    for i, t in enumerate(testfiles):
+        print t
+        fpfile = t.file
+        print fpfile
+
+        newpath = munge_file(fpfile.path, munges)
+
+        if newpath is None or not os.path.exists(newpath):
+            log.warning("File %s doesn't exist, not fingerprinting it" % newpath)
+            continue
+
+        try:
+            fptime, lookuptime, fpresult = fp.lookup(newpath)
+            remove_file(newpath)
+            result = Result(run, t.id, fpresult, int(fptime), int(lookuptime))
+            print result
+            db.session.add(result)
+        except Exception as e:
+            log.warning("Error performing fingerprint")
+            log.warning(e)
+
+        if i % 10 == 0:
+            db.session.commit()
+
+    now = datetime.datetime.now()
+    now = now.replace(microsecond=0)
+    run.finished = now
+    db.session.add(run)
     db.session.commit()
 
 def show_munge():
     print ", ".join(sorted(munge.munge_classes.keys()))
 
 def show_fp_engines():
-    conf.import_fp_modules()
     print "Available fingerprinting engines:"
     print ", ".join(fingerprint.fingerprint_index.keys())
 
@@ -239,6 +341,9 @@ if __name__ == "__main__":
         if args.c:
             name = args.n
             size = args.s
+            if not size or not name:
+                print "size (-s) and name (-n) required"
+                sys.exit(1)
             holdback = args.b
             create_testset(name, size, holdback)
         elif args.l:
@@ -251,8 +356,11 @@ if __name__ == "__main__":
         else:
             testset = args.t
             fp = args.f
-            munge = args.m
-            make_run(testset, fp, munge)
+            themunge = args.m
+            if not testset or not fp or not themunge:
+                print "testset (-t), fp engine (-f) and munge (-m) needed"
+                sys.exit(1)
+            create_run(testset, fp, themunge)
     elif args.subparser == "run":
         if args.l:
             list_runs()

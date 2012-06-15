@@ -1,6 +1,7 @@
 import json
 import os
 import subprocess
+import time
 
 import fingerprint
 import db
@@ -71,10 +72,21 @@ class Echoprint(fingerprint.Fingerprinter):
         echoprint_support.fp.ingest(data, do_commit=True)
 
     def lookup(self, file):
+        stime = time.time()
         data = self._codegen(file)
-        code = data[0]["code"]
+        mtime = time.time()
+        res = data[0]
+        if "code" in res:
+            code = res["code"]
+        else:
+            print res
+            code = ""
         match = echoprint_support.fp.best_match_for_query(code)
-        return match.TRID
+        etime = time.time()
+
+        fptime = (mtime-stime)*1000
+        looktime = (etime-mtime)*1000
+        return (fptime, looktime, match.TRID)
 
     def delete_all(self):
         # Erase solr and tokyo tyrant
@@ -89,4 +101,27 @@ fingerprint.fingerprint_index["echoprint"] = {
 }
 
 db.create_tables()
+
+def stats():
+    cur = db.session.query(EchoprintModel)
+    print "Number of records: %d" % cur.count()
+    numtyrant = len(echoprint_support.fp.get_tyrant())
+    print "Number of TT records: %d" % numtyrant
+    uniqsolr = set()
+    with echoprint_support.solr.pooled_connection(echoprint_support.fp._fp_solr) as host:
+        cur = host.query("*:*", fields="track_id", rows=10000)
+        numsolr = cur.results.numFound
+        #while cur.results is not None:
+        #    for r in cur.results:
+        #        uniqsolr.add(r["track_id"][:-1])
+        #    cur = cur.next_batch()
+    print "Number of Solr records: %s" % numsolr
+    alltyrant = echoprint_support.fp.get_tyrant().iterkeys()
+    uniqtt = set()
+    for x in alltyrant:
+        uniqtt.add(x[:-2])
+    print "Number of unique TT records: %s " % len(uniqtt)
+
+if __name__ == "__main__":
+    stats()
 

@@ -64,8 +64,14 @@ class Chromaprint(fingerprint.Fingerprinter):
         acoustid.submit(app_key, api_key, data)
 
     def lookup(self, file):
-        m = acoustid.match(app_key, file, parse=False)
-        return m
+        stime = time.time()
+        duration, fp = acoustid.fingerprint_file(path)
+        mtime = time.time()
+        response = lookup(app_key, fp, duration, acoustid.DEFAULT_META)
+        etime = time.time()
+        fptime = (mtime-stime)*1000
+        looktime = (etime-mtime)*1000
+        return (fptime, looktime, response)
 
     def delete_all(self):
         # Delete the chromaprint database

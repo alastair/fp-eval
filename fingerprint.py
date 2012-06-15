@@ -16,6 +16,8 @@ class Fingerprinter(object):
 
     def lookup(self, file):
         """ Look up a file and return the unique fp identifier """
+        # Return a tuple (fingerprint time, lookup time, result)
+        # Times should be in milliseconds
         raise NotImplementedError()
 
     def ingest_single(self, data):

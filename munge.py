@@ -1,5 +1,11 @@
 
 munge_classes = {}
+import os
+import tempfile
+import shutil
+import subprocess
+
+import log
 
 """
     if decoder == 'mpg123':
@@ -47,10 +53,22 @@ munge_classes = {}
 """
 
 class Munge(object):
-    def perform(self, fromfile, tofile):
+    def perform(self, fromfile):
+        if not os.path.exists(fromfile):
+            log.debug("Tried to munge %s but it's not there" % fromfile)
+            return None
+        ext = os.path.splitext(fromfile)[1]
+        (handle, tofile) = tempfile.mkstemp("%s" % ext)
+        os.close(handle)
         command = self.getExecCommand(fromfile, tofile)
         if command is not None:
-            pass
+            log.debug("performing command")
+            log.debug(" ".join(command))
+            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            p.communicate()
+        else:
+            shutil.copyfile(fromfile, tofile)
+        return tofile
 
     def getExecCommand(self, fromfile, tofile):
         raise NotImplementedError("must implement getExecCommand in subclass")
@@ -63,34 +81,63 @@ munge_classes["nomunge"] = NoMunge
 
 class Chop(Munge):
     """ limit the start time or length """
+
+    def __init__(self):
+        raise NotImplementedError("Implement a subclass that sets start & duration")
+
     def getExecCommand(self, fromfile, tofile):
         start = self.start
         dur = self.duration
+        command = ["ffmpeg", "-i", fromfile, "-y"]
+        if start:
+            command.extend(["-ss", str(start)])
+        if dur:
+            command.extend(["-t", str(dur)])
+        command.append(tofile)
+        return command
 
 class Chop60(Chop):
+    def __init__(self): pass
     start = None
     duration = 60
 class Chop30(Chop):
+    def __init__(self): pass
     start = None
     duration = 30
 class Start30(Chop):
+    def __init__(self): pass
     start = 30
     duration = None
+class Start30Chop30(Chop):
+    def __init__(self): pass
+    start = 30
+    duration = 30
+class Start60Chop30(Chop):
+    def __init__(self): pass
+    start = 60
+    duration = 30
 class Start60(Chop):
+    def __init__(self): pass
     start = 60
     duration = None
-munge_classes["chop60"] = Chop60
+munge_classes["chop30"] = Chop30
 munge_classes["chop60"] = Chop60
 munge_classes["start30"] = Start30
+munge_classes["start30chop30"] = Start30Chop30
+munge_classes["start60chop30"] = Start60Chop30
 munge_classes["start60"] = Start60
 
 class Bitrate(Munge):
     """ Re-encode as MP3 with a different bitrate """
+    def __init__(self):
+        raise NotImplementedException("Run a subclass that supplies a bitrate")
     def getExecCommand(self, fromfile, tofile):
         return self.bitrate
 class Bitrate64(Bitrate):
+    def __init__(self): pass
     bitrate = 64
 class Bitrate96(Bitrate):
+    def __init__(self): pass
     bitrate = 96
 munge_classes["bitrate64"] = Bitrate64
 munge_classes["bitrate96"] = Bitrate96
@@ -102,13 +149,20 @@ class GSM(Munge):
 
 class SoundMix(Munge):
     """ Mix in some other noises """
-    pass
+    def __init__(self):
+        raise NotImplementedException("Run a subclass that supplies a noisefile")
+    
+    def getExecCommand(self, fromfile, tofile):
+        pass
 
 class WhiteNoiseMix(SoundMix):
+    def __init__(self): pass
     pass
 class CarNoiseMix(SoundMix):
+    def __init__(self): pass
     pass
 class PersonNoiseMix(SoundMix):
+    def __init__(self): pass
     pass
 #munge_classes["whitenoise"] = WhiteNoiseMix
 #munge_classes["carnoise"] = CarNoiseMix
@@ -116,13 +170,20 @@ class PersonNoiseMix(SoundMix):
 
 class Volume(Munge):
     """ Change the volume """
-    pass
+    def __init__(self):
+        raise NotImplementedException("Run a subclass that supplies a volume")
+    
+    def getExecCommand(self, fromfile, tofile):
+        pass
 
 class Volume50(Volume):
+    def __init__(self): pass
     volume = 0.5
 class Volume80(Volume):
+    def __init__(self): pass
     volume = 0.8
 class Volume120(Volume):
+    def __init__(self): pass
     volume = 1.2
 munge_classes["volume50"] = Volume50
 munge_classes["volume80"] = Volume80
