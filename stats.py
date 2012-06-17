@@ -2,6 +2,12 @@
 
 # Print statistics for a run
 
+# True positive: Gives the right answer
+# False positive A: Gives the wrong answer
+# False positive B: Gives a match when we didn't expect one
+# False negative: Says it's not there and it is
+# True negative: Says it's not there and it isn't
+
 import db
 import evaluation
 import fingerprint
@@ -30,7 +36,8 @@ def prf(numbers_dict):
     print "P %2.4f R %2.4f F %2.4f TNR %2.4f Acc %2.4f %s" % (precision, recall, f, true_negative_rate, accuracy, str(numbers_dict))
     return {"precision":precision, "recall":recall, "f":f, "true_negative_rate":true_negative_rate, "accuracy":accuracy}
 
-def dpwe(numbers_dict):
+def dpwe(numbers_dict, old_queries, new_queries):
+    total_queries = old_queries + new_queries
     # compute dan's measures.. probability of error, false accept rate, correct accept rate, false reject rate
     car = far = frr = pr = 0
     r1 = float(numbers_dict["tp"])
@@ -45,7 +52,7 @@ def dpwe(numbers_dict):
     if r1 or r2 or r3:
         frr = (r2 + r3) / (r1 + r2 + r3)
     # probability of error
-    pr = ((_old_queries / _total_queries) * frr) + ((_new_queries / _total_queries) * far)    
+    pr = ((old_queries / total_queries) * frr) + ((new_queries / total_queries) * far)    
     print "PR %2.4f CAR %2.4f FAR %2.4f FRR %2.4f %s" % (pr, car, far, frr, str(numbers_dict))
     stats = {}
     stats.update(numbers_dict)    
@@ -72,17 +79,54 @@ def stats(run_id):
         numfiles = len(run.testset.testfiles)
         numresults = len(run.results)
         if run.finished and numfiles != numresults:
-            log.warning("The run is finished, but the number of results doesn't match the number of testfiles")
-            log.warning("Something funny may be going on")
+            log.warning("The run is finished, but the number of results (%d) doesn't match" % numresults)
+            log.warning("the number of testfiles (%d). Something funny may be going on" % numfiles)
 
+
+        stats = {"tp": 0, "fp-a": 0, "fn": 0, "fp-b": 0, "tn": 0}
+
+        # Not negative files
+        old_queries = 0
+        # Negative files
+        new_queries = 0
         for r in run.results:
-            print r
+            cur = db.session.query(fptable).filter(fptable.file_id == r.testfile.file.id)
+            if cur.count():
+                if r.testfile.file.negative:
+                    new_queries += 1
+                else:
+                    old_queries += 1
+                real = cur.one()
 
+                expected = real.trid
+                actual = r.result
 
-        # from run, get the fp engine
-        # from fp lookup, get the engine table
-        # join result to engine table through file
-        # compare fpid
+                if actual:
+                    # Result from the lookup
+                    if expected:
+                        if actual == expected:
+                            # Match, TP
+                            stats["tp"] += 1
+                        else:
+                            # Match but wrong, FP-a
+                            stats["fp-a"] += 1
+                    else:
+                        # Got a match but didn't want it, FB-b
+                        stats["fp-b"] += 1
+
+                else:
+                    # No result from the lookup
+                    if expected:
+                        # We wanted a match, FN
+                        stats["fn"] += 1
+                    else:
+                        # Didn't expect a match, FP
+                        stats["fp"] += 1
+            else:
+                print "NO RESULT FOR", r
+
+        print dpwe(stats, old_queries, new_queries)
+        print prf(stats)
 
 def main():
     p = argparse.ArgumentParser()
