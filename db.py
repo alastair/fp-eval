@@ -6,7 +6,8 @@ import conf
 
 Base = declarative_base()
 
-engine = create_engine(conf.dbhost)
+engine = create_engine('sqlite:///fp.db')
+#engine = create_engine(conf.dbhost)
 DbSession = sessionmaker(bind=engine)
 session = DbSession()
 

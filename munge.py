@@ -54,7 +54,7 @@ import log
 
 class Munge(object):
     def perform(self, fromfile):
-        if not os.path.exists(fromfile):
+        if not fromfile or not os.path.exists(fromfile):
             log.debug("Tried to munge %s but it's not there" % fromfile)
             return None
         ext = os.path.splitext(fromfile)[1]

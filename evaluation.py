@@ -111,6 +111,7 @@ class Result(db.Base):
     lookuptime = sqlalchemy.Column(sqlalchemy.Integer)
 
     run = relationship(Run, backref="results")
+    testfile = relationship(Testfile)
 
     def __init__(self, run, testfile, result, fptime, lookuptime):
         """
@@ -213,22 +214,32 @@ def munge_file(file, munges):
     if not isinstance(munges, list):
         munges = map(operator.methodcaller("strip"), munges.split(","))
 
-    newfile = file
-    #XXX: If no munge, newfile is same as infile.
+    print "munges", munges
+
+    # The first thing we do is make a copy of the input file.
+    # This means we can safely delete any file that is used
+    # as input or output.
+
+    nomunge = munge.NoMunge()
+    tmpfile = nomunge.perform(file)
+
     for m in munges:
-        # XXX: Remove intermediate files
+        print "performing", m
+        print "  in is", tmpfile
         cls = munge.munge_classes[m]
         inst = cls()
-        tmpfile = inst.perform(newfile)
+        newfile = inst.perform(tmpfile)
+        print "  out is", newfile
         remove_file(newfile)
-        newfile = tmpfile
+        tmpfile = newfile
 
     return newfile
 
 def remove_file(file):
     print "remove file", file
-    #os.unlink(file)
-    pass
+    if file:
+        #os.unlink(file)
+        pass
 
 def execute_run(run_id):
     """
@@ -262,6 +273,7 @@ def execute_run(run_id):
                     .outerjoin(Result)\
                     .filter(Testset.id == run.testset_id)\
                     .filter(Result.id == None)
+    print "got", testfiles.count(), "testfiles"
     for i, t in enumerate(testfiles):
         print t
         fpfile = t.file

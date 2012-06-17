@@ -34,7 +34,7 @@ class EchoprintModel(db.Base):
         self.trid = trid
 
     def __repr__(self):
-        return "Echoprint<%s, id=%s>" % (self.file_id, self.trid)
+        return "<Echoprint(id=%s, file=%s, trid=%s)>" % (self.id, self.file_id, self.trid)
 
 class Echoprint(fingerprint.Fingerprinter):
 

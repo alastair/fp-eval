@@ -7,6 +7,7 @@ Requirements
 
 * SQLAlchemy
 * MySql
+* Pika
 * To perform query alterations:
 ** mpg123
 ** ffmpeg
