@@ -6,6 +6,7 @@ conf.read('fingerprint.conf')
 
 path = conf.get("main", "path")
 negatives = conf.getint("main", "negatives")
+dbhost = conf.get("main", "dbhost")
 
 def get(section, key):
     return conf.get(section, key)

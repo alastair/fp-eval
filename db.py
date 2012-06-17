@@ -2,12 +2,13 @@ import sqlalchemy
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+import conf
 
 Base = declarative_base()
 
-engine = create_engine('sqlite:///fp.db')
-SqliteSession = sessionmaker(bind=engine)
-session = SqliteSession()
+engine = create_engine(conf.dbhost)
+DbSession = sessionmaker(bind=engine)
+session = DbSession()
 
 """ Models """
 
@@ -15,7 +16,7 @@ class FPFile(Base):
     __tablename__ = "file"
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    path = sqlalchemy.Column(sqlalchemy.String)
+    path = sqlalchemy.Column(sqlalchemy.String(1000))
     negative = sqlalchemy.Column(sqlalchemy.Boolean)
 
     def __init__(self, path, negative=False):

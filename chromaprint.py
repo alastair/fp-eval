@@ -23,7 +23,7 @@ class ChromaprintModel(db.Base):
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     file_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'))
-    trid = sqlalchemy.Column(sqlalchemy.String)
+    trid = sqlalchemy.Column(sqlalchemy.String(20))
 
     def __init__(self, file, trid):
         self.file_id = file.id

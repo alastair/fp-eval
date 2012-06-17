@@ -22,10 +22,10 @@ class Testset(db.Base):
     """ A testset is an identifier for a collection of files that are used in an evaluation """
     __tablename__ = "testset"
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    name = sqlalchemy.Column(sqlalchemy.String)
+    name = sqlalchemy.Column(sqlalchemy.String(50))
     created = sqlalchemy.Column(sqlalchemy.DateTime)
 
-    # testfiles <- list of all Testfiles
+    # (auto) testfiles <- list of all Testfiles
 
     def __init__(self, name):
         self.name = name
@@ -65,9 +65,9 @@ class Run(db.Base):
     # the testset listing all the files that should be tested in this run
     testset_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testset.id'))
     # A list of munge classes
-    munge = sqlalchemy.Column(sqlalchemy.String)
+    munge = sqlalchemy.Column(sqlalchemy.String(100))
     # The fp algorithm to use
-    engine = sqlalchemy.Column(sqlalchemy.String)
+    engine = sqlalchemy.Column(sqlalchemy.String(20))
     # The date this run was created
     created = sqlalchemy.Column(sqlalchemy.DateTime)
     #started
@@ -76,7 +76,7 @@ class Run(db.Base):
     finished = sqlalchemy.Column(sqlalchemy.DateTime)
 
     testset = relationship(Testset)
-    # results <- list of results
+    # (auto) results <- list of results
 
     def __init__(self, testset, munge, engine):
         if not munge:
@@ -106,7 +106,7 @@ class Result(db.Base):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     run_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('run.id'))
     testfile_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testfile.id'))
-    result = sqlalchemy.Column(sqlalchemy.String)
+    result = sqlalchemy.Column(sqlalchemy.String(20))
     fptime = sqlalchemy.Column(sqlalchemy.Integer)
     lookuptime = sqlalchemy.Column(sqlalchemy.Integer)
 

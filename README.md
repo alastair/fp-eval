@@ -1,10 +1,12 @@
 Fingerprint evaluation
 ----------------------
 
+mysql password: fsud987ydIHJf8K09fIDW2flfdJ  user: fp
+
 Requirements
 
 * SQLAlchemy
-* Sqlite
+* MySql
 * To perform query alterations:
 ** mpg123
 ** ffmpeg
