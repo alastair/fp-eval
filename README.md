@@ -3,6 +3,10 @@ Fingerprint evaluation
 
 mysql password: fsud987ydIHJf8K09fIDW2flfdJ  user: fp
 
+`sudo /usr/local/sbin/rabbitmqctl add_user fingerprint fingerprint
+sudo /usr/local/sbin/rabbitmqctl add_vhost fp
+sudo /usr/local/sbin/rabbitmqctl set_permissions -p fp fingerprint ".*" ".*" ".*"`
+
 Requirements
 
 * SQLAlchemy
