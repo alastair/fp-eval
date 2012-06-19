@@ -90,6 +90,9 @@ def stats(run_id):
         # Negative files
         new_queries = 0
         for r in run.results:
+            # XXX: Does this need to be an outer join? Get testfiles, outer join fptable?
+            #      So that if we have a result for something not in the fptable? Should be 'None'?
+            # XXX: Does this treat negatives correctly?
             cur = db.session.query(fptable).filter(fptable.file_id == r.testfile.file.id)
             if cur.count():
                 if r.testfile.file.negative:
