@@ -36,11 +36,11 @@ def main(delete=False):
     fpfiles = toprocess[cutoff:]
 
     for f in negativefiles:
-        nfile = db.FPFile(unicode(f, errors="ignore"), negative=True)
+        nfile = db.FPFile(f.decode("utf8"), negative=True)
         db.session.add(nfile)
 
     for f in fpfiles:
-        fpfile = db.FPFile(unicode(f, errors="ignore"))
+        fpfile = db.FPFile(f.decode("utf8"))
         db.session.add(fpfile)
     db.session.commit()
 
