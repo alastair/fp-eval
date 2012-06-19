@@ -20,19 +20,23 @@ def delete(engine):
         raise Exception("%s is not a valid fingerprint engine" % (engine))
     instance = engine_class()
     instance.delete_all()
+    thequeue = queue.FpQueue("ingest_%s" % engine)
+    thequeue.clear_queue()
 
 def add_queue(engine):
     engine_map = fingerprint.fingerprint_index.get(engine)
     engine_table = engine_map.get("dbmodel") if engine_map else None
     cur = db.session.query(db.FPFile).filter(db.FPFile.negative == False)\
             .outerjoin(engine_table).filter(engine_table.file_id == None)
-    log.info("got %d things to do stuff with" % cur.count())
+    log.info("got %d things to add to the %s queue" % (cur.count(), engine))
     thequeue = queue.FpQueue("ingest_%s" % engine)
     for f in cur:
         d = {"id": f.id}
         thequeue.put(d)
+    log.info("...done")
 
-def ingest_callback(data):
+def main(engine):
+    thequeue = queue.FpQueue("ingest_%s" % engine)
     engine_map = fingerprint.fingerprint_index.get(engine)
     engine_class = engine_map.get("instance") if engine_map else None
     if not engine_class:
@@ -43,12 +47,12 @@ def ingest_callback(data):
 
     log.info("Importing files for engine %s" % (engine))
     fp_list = []
-    cur = db.session.query(db.FPFile).filter(db.FPFile.negative == False)\
-            .outerjoin(engine_table).filter(engine_table.file_id == None)
-    log.info("got %d things to do stuff with" % cur.count())
+    ack_handles = []
     count = 0
-    total = cur.count()
-    for f in cur:
+    while True:
+        data, handle = thequeue.get()
+        cur = db.session.query(db.FPFile).filter(db.FPFile.id == data["id"])
+        f = cur.one()
         (trackid, fpdata) = instance.fingerprint(f.path)
         error = "error" in fpdata
         if not error:
@@ -62,14 +66,14 @@ def ingest_callback(data):
         # Ingest every 100 songs
         if len(fp_list) > 99:
             log.info("Ingesting 100 files at once")
-            log.info("%d/%d done" % (count, total))
+            queuesize = thequeue.size()
+            log.info("%d done, %d remaining" % (count, queuesize))
             db.session.commit()
             instance.ingest_many(fp_list)
             fp_list = []
-
-def main(engine):
-    thequeue = queue.FpQueue("ingest_%s" % engine)
-    thequeue.consume(ingest_callback)
+            for h in ack_handles:
+                thequeue.ack(h)
+            ack_handles = []
 
 #XXX: Don't want to continually fingerprint files that had errors
 def xmain(engine):

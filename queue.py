@@ -3,6 +3,8 @@ import json
 import conf
 
 class FpQueue(object):
+    # XXX: Methods don't work if queue isn't there
+    # (e.g. size, delete a second time)
 
     def __init__(self, queuename):
         self.queuename = queuename
@@ -25,7 +27,11 @@ class FpQueue(object):
                       delivery_mode=2))
 
     def clear_queue(self):
-        print "clearing queue?"
+        self.channel.queue_delete(queue=self.queuename)
+
+    def size(self):
+        status = self.channel.queue_declare(queue=self.queuename, passive=True)
+        return status.method.message_count
 
     def get(self):
         self.channel.basic_qos(prefetch_count=1)
