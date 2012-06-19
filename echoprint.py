@@ -62,7 +62,12 @@ class Echoprint(fingerprint.Fingerprinter):
             proclist.append("%d" % duration)
         p = subprocess.Popen(proclist, stdout=subprocess.PIPE)
         code = p.communicate()[0]
-        return json.loads(code)
+        try:
+            return json.loads(code)
+        except ValueError as e:
+            print "Error loading"
+            print code
+            return [{}]
 
     def ingest_single(self, data):
         echoprint_support.fp.ingest(data, do_commit=True)
