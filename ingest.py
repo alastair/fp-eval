@@ -30,6 +30,7 @@ def add_queue(engine):
             .outerjoin(engine_table).filter(engine_table.file_id == None)
     log.info("got %d things to add to the %s queue" % (cur.count(), engine))
     thequeue = queue.FpQueue("ingest_%s" % engine)
+    thequeue.clear_queue()
     for f in cur:
         d = {"id": f.id}
         thequeue.put(d)
@@ -51,6 +52,8 @@ def main(engine):
     count = 0
     while True:
         data, handle = thequeue.get()
+        if data is None:
+            break
         cur = db.session.query(db.FPFile).filter(db.FPFile.id == data["id"])
         f = cur.one()
         (trackid, fpdata) = instance.fingerprint(f.path)
@@ -74,6 +77,13 @@ def main(engine):
             for h in ack_handles:
                 thequeue.ack(h)
             ack_handles = []
+
+    # After there's no more data, import the remaining files
+    log.info("Ingesting remaining %d files" % len(fp_list))
+    instance.ingest_many(fp_list)
+    db.session.commit()
+    for h in ack_handles:
+        thequeue.ack(h)
 
 #XXX: Don't want to continually fingerprint files that had errors
 def xmain(engine):

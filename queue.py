@@ -28,6 +28,8 @@ class FpQueue(object):
 
     def clear_queue(self):
         self.channel.queue_delete(queue=self.queuename)
+        self.channel.queue_declare(queue=self.queuename, durable=True,
+                  exclusive=False, auto_delete=False)
 
     def size(self):
         status = self.channel.queue_declare(queue=self.queuename, passive=True)
