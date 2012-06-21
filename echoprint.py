@@ -124,7 +124,7 @@ def stats():
     alltyrant = echoprint_support.fp.get_tyrant().iterkeys()
     uniqtt = set()
     for x in alltyrant:
-        uniqtt.add(x[:-2])
+        uniqtt.add(x.split("-")[0])
     print "Number of unique TT records: %s " % len(uniqtt)
 
 if __name__ == "__main__":
