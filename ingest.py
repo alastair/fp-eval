@@ -54,6 +54,7 @@ def main(engine):
         data, handle = thequeue.get()
         if data is None:
             break
+        ack_handles.append(handle)
         cur = db.session.query(db.FPFile).filter(db.FPFile.id == data["id"])
         f = cur.one()
         (trackid, fpdata) = instance.fingerprint(f.path)

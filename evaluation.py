@@ -291,6 +291,7 @@ def execute_run(run_id):
         data, handle = thequeue.get()
         if data is None:
             break
+        ack_handles.append(handle)
         t = db.session.query(Testfile).filter(Testfile.id == data["testfile_id"]).one()
         print t
         fpfile = t.file
