@@ -55,12 +55,12 @@ def main(engine):
         data, handle = thequeue.get()
         if data is None:
             break
-        ack_handles.append(handle)
         cur = db.session.query(db.FPFile).filter(db.FPFile.id == data["id"])
         f = cur.one()
         (trackid, fpdata) = instance.fingerprint(f.path)
         error = "error" in fpdata
         if not error:
+            ack_handles.append(handle)
             e = engine_table(f, trackid)
             db.session.add(e)
             fp_list.append(fpdata)
