@@ -9,6 +9,14 @@ sudo /usr/local/sbin/rabbitmqctl set_permissions -p fp fingerprint ".*" ".*" ".*
 
 Requirements
 
+apt-get install rabbitmq-erlang-client rabbitmq-server python-mysqldb python-sqlalchemy python-pika nfs-common python-eyed3 
+`easy_install ConcurrentLogHandler`
+
+132.206.14.135:/mnt/store2 /mnt/datasets nfs    ro      0       0
+
+echoprint:
+checkout -t origin/filequote
+
 * SQLAlchemy
 * MySql
 * Pika
