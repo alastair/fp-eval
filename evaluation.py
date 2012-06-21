@@ -107,7 +107,7 @@ class Result(db.Base):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     run_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('run.id'))
     testfile_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testfile.id'))
-    result = sqlalchemy.Column(sqlalchemy.String(20))
+    result = sqlalchemy.Column(sqlalchemy.String(50))
     fptime = sqlalchemy.Column(sqlalchemy.Integer)
     lookuptime = sqlalchemy.Column(sqlalchemy.Integer)
 
