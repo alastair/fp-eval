@@ -50,6 +50,7 @@ def main(engine):
     fp_list = []
     ack_handles = []
     count = 0
+    print "%s to import" % thequeue.size()
     while True:
         data, handle = thequeue.get()
         if data is None:

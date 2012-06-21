@@ -1,12 +1,13 @@
 import logging
 import sys
+from cloghandler import ConcurrentRotatingFileHandler
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
 
 formatter = logging.Formatter("%(asctime)s %(levelname) 7s:%(message)s");
 
-fh = logging.FileHandler('fingerprint.log')
+fh = ConcurrentRotatingFileHandler("fingerprint.log")
 fh.setLevel(logging.DEBUG)
 fh.setFormatter(formatter)
 logger.addHandler(fh)
