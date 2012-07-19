@@ -20,7 +20,7 @@ Requirements
 Optional requirements: installations of fingerprint algorithms
 
 * Echoprint
-* Landmark fungerprinting
+* Landmark fingerprinting
 * Chromaprint
 
 * Ke vision FP
@@ -34,9 +34,9 @@ To start the servers:
     java -jar solr.jar
     ttserver -host localhost -port 1978 echoprint-tt.tch
 
-Acoustid / Chromaprintb notes
+Acoustid / Chromaprint notes
 -----------------------------
-Install pymad or ffmpeg
+Install pymad or ffmpeg. eyeD3 for tags
 
 Set up
 * acoustid server
@@ -97,27 +97,8 @@ do this with
     python landmark.py -d
     python ke.py -d
 
-Development:
-------------
 
-(out of date)
 
-To create a new module:
-create a python file e.g. `myfp.py`. You may want to create a myfp\_support
-directory to put additional dependencies in
-
-Make a class inside myfp.py that inherits from the Fingerprint class in
-fingerprint.py
-set the ```__provides``` member to a short name for your fingerprint
-engine. This is what you refer to it with in the configuration file.
-
-Ensure you override the fingerprint(file), ingest(data), and lookup(file)
-methods.
-Create a class that inherits from db.Base in order to create a reference
-database to map from file->fingerprint code.
-fill in the ```fingerprint.fp_index``` dict with information on your model.
-
-See the example file: examplefp.py to see what to do.
 
 License
 -------
