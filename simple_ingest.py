@@ -23,7 +23,7 @@ def main(engine, files):
 
     for f in files:
         (fpid, data) = fp.fingerprint(f)
-        fp.ingest_single(data)
+        fp.ingest_many([data])
 
         full_path = os.path.abspath(f)
 

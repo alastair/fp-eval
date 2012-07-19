@@ -70,9 +70,6 @@ class Echoprint(fingerprint.Fingerprinter):
             print code
             return [{}]
 
-    def ingest_single(self, data):
-        echoprint_support.fp.ingest(data, do_commit=True)
-
     def ingest_many(self, data):
         # echoprint ingest will take a list then commit
         echoprint_support.fp.ingest(data, do_commit=True)

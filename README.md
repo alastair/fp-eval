@@ -70,6 +70,11 @@ run the admin/cron/import.sh script to ingest into the main database.
 
 Landmark notes
 --------------
+install mlabwrap: http://mlabwrap.sourceforge.net/
+http://jamesgregson.blogspot.ca/2011/07/installing-mlabwrap-on-os-x-and-linux.html
+setup.py, change MATLAB_VERSION = 7.3
+
+Install mpg123 and mp3info, symlink into src directory
 
 To run the stuff:
 -----------------
