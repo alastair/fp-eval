@@ -20,12 +20,6 @@ class Fingerprinter(object):
         # Times should be in milliseconds
         raise NotImplementedError()
 
-    def ingest_single(self, data):
-        """ Ingest a single datapoint. data should
-            be in a format that the fp understands
-        """
-        raise NotImplementedError()
-
     def ingest_many(self, data):
         """ Bulk import a list of data. May loop through data
             and do ingest single, or may do a bulk import

@@ -1,5 +1,4 @@
-import fingerprint
-import db
+import fingerprint import db
 import sqlalchemy
 import conf
 import eyeD3
@@ -23,7 +22,7 @@ class ChromaprintModel(db.Base):
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     file_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'))
-    trid = sqlalchemy.Column(sqlalchemy.String(20))
+    trid = sqlalchemy.Column(sqlalchemy.String(50))
 
     def __init__(self, file, trid):
         self.file_id = file.id
@@ -57,9 +56,6 @@ class Chromaprint(fingerprint.Fingerprinter):
                }
         return (fpid, data)
 
-    def ingest_single(self, data):
-        acoustid.submit(app_key, api_key, data)
-
     def ingest_many(self, data):
         acoustid.submit(app_key, api_key, data)
 
@@ -78,9 +74,22 @@ class Chromaprint(fingerprint.Fingerprinter):
         # XXX: Need to connect to postgres
         # XXX: postgres database needs to be accessible from this machine.
 
+        """
+        fingerprint_source, fingerprint
+        track_meta_source, track_meta, track_puid_source, track_mbid_source, submission, meta
+        track_puid, track_mbid
+        stats
+        track
+
+        """
+
+
         # Delete the local database
         db.session.query(ChromaprintModel).delete()
         db.session.commit()
+
+        q = queue.FpQueue("ingest_chromaprint")
+        q.clear_queue()
 
 fingerprint.fingerprint_index["chromaprint"] = {
         "dbmodel": ChromaprintModel,
@@ -89,3 +98,9 @@ fingerprint.fingerprint_index["chromaprint"] = {
 
 db.create_tables()
 
+def stats():
+    q = queue.FpQueue("ingest_chromaprint")
+    print "Ingest queue size: %s" % q.size()
+
+if __name__ == "__main__":
+    stats()

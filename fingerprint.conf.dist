@@ -1,22 +1,22 @@
 [main]
-path: /Users/alastairlocal/Codiach/Popular
+path: /Users/alastairlocal/Music
 negatives: 10
+dbhost = mysql://fp:fsud987ydIHJf8K09fIDW2flfdJ@132.206.14.136/fpeval
+queuehost = 132.206.14.136
+queuevhost = fp
+queueuser = fingerprint
+queuepass = fingerprint
 
 [modules]
-module: echoprint, chromaprint, landmark
+module: echoprint,chromaprint, landmark
 
 [echoprint]
-solr_server: localhost
-tyrant_host: localhost
-tyrant_port: 1970
-codegen_path: /home/alastair/code/echoprint-codegen/echoprint-codegen
+solr_server: http://132.206.14.136:8502/solr/fp
+tyrant_host: 132.206.14.136
+tyrant_port: 1978
+codegen_path: /Users/alastairlocal/code/echoprint-codegen/echoprint-codegen
 
 [chromaprint]
 server: https://132.206.14.136/ws/v2/
 api_key: 0bB2HTpl
 app_key: PKlUB2YR
-
-[landmark]
-matlab_path: matlab
-landmark_dir: /home/alastair/code/fp-eval/landmark_support
-

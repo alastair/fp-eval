@@ -90,43 +90,45 @@ def stats(run_id):
         # Negative files
         new_queries = 0
         for r in run.results:
-            cur = db.session.query(fptable).filter(fptable.file_id == r.testfile.file.id)
-            if cur.count():
-                if r.testfile.file.negative:
-                    new_queries += 1
-                else:
-                    old_queries += 1
-                real = cur.one()
-
-                expected = real.trid
-                actual = r.result
-
-                if actual:
-                    # Result from the lookup
-                    if expected:
-                        if actual == expected:
-                            # Match, TP
-                            stats["tp"] += 1
-                        else:
-                            # Match but wrong, FP-a
-                            stats["fp-a"] += 1
-                    else:
-                        # Got a match but didn't want it, FB-b
-                        stats["fp-b"] += 1
-
-                else:
-                    # No result from the lookup
-                    if expected:
-                        # We wanted a match, FN
-                        stats["fn"] += 1
-                    else:
-                        # Didn't expect a match, FP
-                        stats["fp"] += 1
+            actual = r.result
+            if r.testfile.file.negative:
+                new_queries += 1
+                expected = None
             else:
-                print "NO RESULT FOR", r
+                old_queries += 1
+                cur = db.session.query(fptable).filter(fptable.file_id == r.testfile.file.id)
+                if cur.count():
+                    real = cur.one()
+                    expected = real.trid
+                else:
+                    print "NO RESULT FOR", r
+                    expected = None
 
-        print dpwe(stats, old_queries, new_queries)
-        print prf(stats)
+            if actual:
+                # Result from the lookup
+                if expected:
+                    if actual == expected:
+                        # Match, TP
+                        stats["tp"] += 1
+                    else:
+                        # Match but wrong, FP-a
+                        stats["fp-a"] += 1
+                else:
+                    # Got a match but didn't want it, FB-b
+                    stats["fp-b"] += 1
+
+            else:
+                # No result from the lookup
+                if expected:
+                    # We wanted a match, FN
+                    stats["fn"] += 1
+                else:
+                    # Didn't expect a match, TN
+                    stats["tn"] += 1
+
+        if old_queries + new_queries > 0:
+            d = dpwe(stats, old_queries, new_queries)
+            s = prf(stats)
 
 def main():
     p = argparse.ArgumentParser()

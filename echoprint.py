@@ -7,6 +7,7 @@ import fingerprint
 import db
 import sqlalchemy
 import conf
+import queue
 
 import echoprint_support.fp
 import echoprint_support.solr
@@ -62,10 +63,12 @@ class Echoprint(fingerprint.Fingerprinter):
             proclist.append("%d" % duration)
         p = subprocess.Popen(proclist, stdout=subprocess.PIPE)
         code = p.communicate()[0]
-        return json.loads(code)
-
-    def ingest_single(self, data):
-        echoprint_support.fp.ingest(data, do_commit=True)
+        try:
+            return json.loads(code)
+        except ValueError as e:
+            print "Error loading"
+            print code
+            return [{}]
 
     def ingest_many(self, data):
         # echoprint ingest will take a list then commit
@@ -94,6 +97,8 @@ class Echoprint(fingerprint.Fingerprinter):
         # Erase the local database
         db.session.query(EchoprintModel).delete()
         db.session.commit()
+        q = queue.FpQueue("ingest_echoprint")
+        q.clear_queue()
 
 fingerprint.fingerprint_index["echoprint"] = {
     "dbmodel": EchoprintModel,
@@ -119,8 +124,10 @@ def stats():
     alltyrant = echoprint_support.fp.get_tyrant().iterkeys()
     uniqtt = set()
     for x in alltyrant:
-        uniqtt.add(x[:-2])
+        uniqtt.add(x.split("-")[0])
     print "Number of unique TT records: %s " % len(uniqtt)
+    q = queue.FpQueue("ingest_echoprint")
+    print "Ingest queue size: %s" % q.size()
 
 if __name__ == "__main__":
     stats()

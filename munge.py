@@ -128,10 +128,22 @@ munge_classes["start60chop30"] = Start60Chop30
 munge_classes["start60"] = Start60
 
 class Bitrate(Munge):
+    """
+        if encode_to == "mp3":
+        what.update({"encoder":"lame","encode_to":"mp3"})
+        cmd = "lame --silent -cbr -b " + str(bitrate) + " "
+        if(lowpass_freq > 0):
+            what.update({"lowpass":lowpass_freq})
+            cmd = cmd + " --lowpass " + str(lowpass_freq) + " "
+        what.update({"bitrate":bitrate})
+        cmd = cmd + me + " " + me + ".mp3"
+    """
     """ Re-encode as MP3 with a different bitrate """
     def __init__(self):
         raise NotImplementedException("Run a subclass that supplies a bitrate")
     def getExecCommand(self, fromfile, tofile):
+
+        command = ["ffmpeg", "-i", fromfile, "-y"]
         return self.bitrate
 class Bitrate64(Bitrate):
     def __init__(self): pass
@@ -144,7 +156,7 @@ munge_classes["bitrate96"] = Bitrate96
 
 class GSM(Munge):
     """ GSM Reduction """
-    # sox
+    # sox --encoding gsm-full-rate
     pass
 
 class SoundMix(Munge):
@@ -192,6 +204,7 @@ munge_classes["volume120"] = Volume120
 class Lowpass(Munge):
     """ Low pass filter """
     pass
+    # lame --lowpass
 #munge_classes["lowpass"] = Lowpass
 
 class Compress(Munge):
@@ -204,15 +217,24 @@ class EQ(Munge):
     pass
 #munge_classes["eq"] = EQ
 
-class YouTube(Munge):
-    """ Reduce quality to a standard 240p youtube quality """
-    def getExecCommand(self, fromfile, tofile):
-        return tofile
-#munge_classes["youtube"] = YouTube
-
 class FMFilter(Munge):
     """ Similar bandwidth and filters as what comes out of
     the radio """
+    """
+                     play track1.wav gain -3 sinc 8000- 29 100 mcompand \
+                   "0.005,0.1 -47,-40,-34,-34,-17,-33" 100 \
+                   "0.003,0.05 -47,-40,-34,-34,-17,-33" 400 \
+                   "0.000625,0.0125 -47,-40,-34,-34,-15,-33" 1600 \
+                   "0.0001,0.025 -47,-40,-34,-34,-31,-31,-0,-30" 6400 \
+                   "0,0.025 -38,-31,-28,-28,-0,-25" \
+                   gain 15 highpass 22 highpass 22 sinc -n 255 -b 16 -17500 \
+                   gain 9 lowpass -1 17801
+
+              The  audio  file  is  played with a simulated FM radio sound (or
+              broadcast signal condition if the lowpass filter at the  end  is
+              skipped). 
+              -- sox(1)
+              """
     pass
 #munge_classes["radio"] = RadioFilter
 

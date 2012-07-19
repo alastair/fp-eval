@@ -1,5 +1,6 @@
 import ConfigParser
 import importlib
+import log
 
 conf = ConfigParser.RawConfigParser()
 conf.read('fingerprint.conf')
@@ -7,6 +8,11 @@ conf.read('fingerprint.conf')
 path = conf.get("main", "path")
 negatives = conf.getint("main", "negatives")
 dbhost = conf.get("main", "dbhost")
+
+queuehost = conf.get("main", "queuehost")
+queuevhost = conf.get("main", "queuevhost")
+queueuser = conf.get("main", "queueuser")
+queuepass = conf.get("main", "queuepass")
 
 def get(section, key):
     return conf.get(section, key)

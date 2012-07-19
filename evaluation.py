@@ -4,6 +4,7 @@ import munge
 import fingerprint
 import conf
 import log
+import queue
 
 import db
 import sqlalchemy
@@ -106,7 +107,7 @@ class Result(db.Base):
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     run_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('run.id'))
     testfile_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testfile.id'))
-    result = sqlalchemy.Column(sqlalchemy.String(20))
+    result = sqlalchemy.Column(sqlalchemy.String(50))
     fptime = sqlalchemy.Column(sqlalchemy.Integer)
     lookuptime = sqlalchemy.Column(sqlalchemy.Integer)
 
@@ -199,6 +200,13 @@ def create_run(testset, fp, mungename):
     db.session.add(run)
     db.session.commit()
 
+    # Once the run has been created, make a queue that contains
+    # all the testfiles to be evaluated
+    thequeue = queue.FpQueue("run_%s" % run.id)
+    for tf in tscursor.one().testfiles:
+        data = {"testfile_id": tf.id}
+        thequeue.put(data)
+
 def list_runs():
     """
     List all the runs in the database
@@ -214,12 +222,13 @@ def munge_file(file, munges):
     if not isinstance(munges, list):
         munges = map(operator.methodcaller("strip"), munges.split(","))
 
-    print "munges", munges
+    if file is None:
+        log.warning("Failed to munge file (was given None!)")
+        return None
 
     # The first thing we do is make a copy of the input file.
     # This means we can safely delete any file that is used
     # as input or output.
-
     nomunge = munge.NoMunge()
     tmpfile = nomunge.perform(file)
 
@@ -268,13 +277,22 @@ def execute_run(run_id):
     fp = fpclass["instance"]()
     # All files that are part of this testset
     # That don't already have a result
-    testfiles = db.session.query(Testfile)\
-                    .join(Testset)\
-                    .outerjoin(Result)\
-                    .filter(Testset.id == run.testset_id)\
-                    .filter(Result.id == None)
-    print "got", testfiles.count(), "testfiles"
-    for i, t in enumerate(testfiles):
+    #testfiles = db.session.query(Testfile)\
+    #                .join(Testset)\
+    #                .outerjoin(Result)\
+    #                .filter(Testset.id == run.testset_id)\
+    #                .filter(Result.id == None)
+    #print "got", testfiles.count(), "testfiles"
+    thequeue = queue.FpQueue("run_%s" % run.id)
+    ack_handles = []
+    log.info("Reading queue for run %s. Got %s files" % (run.id, thequeue.size()))
+    count = 0
+    while True:
+        data, handle = thequeue.get()
+        if data is None:
+            break
+        ack_handles.append(handle)
+        t = db.session.query(Testfile).filter(Testfile.id == data["testfile_id"]).one()
         print t
         fpfile = t.file
         print fpfile
@@ -295,12 +313,19 @@ def execute_run(run_id):
             log.warning("Error performing fingerprint")
             log.warning(e)
 
-        if i % 10 == 0:
+        count += 1
+        if count % 10 == 0:
+            log.info("%s more files to evaluate" % thequeue.size())
             db.session.commit()
+            for h in ack_handles:
+                thequeue.ack(h)
+            ack_handles = []
 
     now = datetime.datetime.now()
     now = now.replace(microsecond=0)
     run.finished = now
+    for h in ack_handles:
+        thequeue.ack(h)
     db.session.add(run)
     db.session.commit()
 
