@@ -7,6 +7,7 @@ import fingerprint
 import db
 import sqlalchemy
 import conf
+import queue
 
 import echoprint_support.fp
 import echoprint_support.solr
@@ -99,6 +100,8 @@ class Echoprint(fingerprint.Fingerprinter):
         # Erase the local database
         db.session.query(EchoprintModel).delete()
         db.session.commit()
+        q = queue.FpQueue("ingest_echoprint")
+        q.clear_queue()
 
 fingerprint.fingerprint_index["echoprint"] = {
     "dbmodel": EchoprintModel,
@@ -126,6 +129,8 @@ def stats():
     for x in alltyrant:
         uniqtt.add(x.split("-")[0])
     print "Number of unique TT records: %s " % len(uniqtt)
+    q = queue.FpQueue("ingest_echoprint")
+    print "Ingest queue size: %s" % q.size()
 
 if __name__ == "__main__":
     stats()
