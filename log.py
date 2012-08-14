@@ -1,6 +1,6 @@
 import logging
 import sys
-from cloghandler import ConcurrentRotatingFileHandler
+from cloghandler.cloghandler import ConcurrentRotatingFileHandler
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
