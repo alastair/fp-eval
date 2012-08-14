@@ -233,31 +233,24 @@ def munge_file(file, munges):
     tmpfile = nomunge.perform(file)
 
     for m in munges:
-        print "performing", m
-        print "  in is", tmpfile
+        log.debug("performing %s" % (m))
         cls = munge.munge_classes[m]
         inst = cls()
         newfile = inst.perform(tmpfile)
-        print "  out is", newfile
-        remove_file(newfile)
+        remove_file(tmpfile)
         tmpfile = newfile
 
     return newfile
 
 def remove_file(file):
-    print "remove file", file
     if file:
-        #os.unlink(file)
-        pass
+        os.unlink(file)
 
 def execute_run(run_id):
     """
     Execute a run.
 
     This does most of the magic. 
-
-    Get all the testfiles in which for this run's testset that have not been evaluated
-
     """
     run = db.session.query(Run).filter(Run.id == run_id)
     if run.count() == 0:
@@ -270,19 +263,12 @@ def execute_run(run_id):
         now = now.replace(microsecond=0)
         run.started = now
     db.session.add(run)
+    db.session.commit()
 
     engine = run.engine
     munges = run.munge
     fpclass = fingerprint.fingerprint_index[engine]
     fp = fpclass["instance"]()
-    # All files that are part of this testset
-    # That don't already have a result
-    #testfiles = db.session.query(Testfile)\
-    #                .join(Testset)\
-    #                .outerjoin(Result)\
-    #                .filter(Testset.id == run.testset_id)\
-    #                .filter(Result.id == None)
-    #print "got", testfiles.count(), "testfiles"
     thequeue = queue.FpQueue("run_%s" % run.id)
     ack_handles = []
     log.info("Reading queue for run %s. Got %s files" % (run.id, thequeue.size()))
@@ -292,10 +278,9 @@ def execute_run(run_id):
         if data is None:
             break
         ack_handles.append(handle)
+        # Find the FpFile that this Testfile points to
         t = db.session.query(Testfile).filter(Testfile.id == data["testfile_id"]).one()
-        print t
         fpfile = t.file
-        print fpfile
 
         newpath = munge_file(fpfile.path, munges)
 
@@ -307,7 +292,6 @@ def execute_run(run_id):
             fptime, lookuptime, fpresult = fp.lookup(newpath)
             remove_file(newpath)
             result = Result(run, t.id, fpresult, int(fptime), int(lookuptime))
-            print result
             db.session.add(result)
         except Exception as e:
             log.warning("Error performing fingerprint")
@@ -321,9 +305,10 @@ def execute_run(run_id):
                 thequeue.ack(h)
             ack_handles = []
 
-    now = datetime.datetime.now()
-    now = now.replace(microsecond=0)
+    # Mark the run as done
+    now = datetime.datetime.now().replace(microsecond=0)
     run.finished = now
+    # Finish any acks that are required
     for h in ack_handles:
         thequeue.ack(h)
     db.session.add(run)
