@@ -1,4 +1,5 @@
-import fingerprint import db
+import fingerprint
+import db
 import sqlalchemy
 import conf
 import eyeD3
@@ -56,6 +57,9 @@ class Chromaprint(fingerprint.Fingerprinter):
                }
         return (fpid, data)
 
+    def ingest_single(self, data):
+        acoustid.submit(app_key, api_key, data)
+
     def ingest_many(self, data):
         acoustid.submit(app_key, api_key, data)
 
@@ -88,9 +92,6 @@ class Chromaprint(fingerprint.Fingerprinter):
         db.session.query(ChromaprintModel).delete()
         db.session.commit()
 
-        q = queue.FpQueue("ingest_chromaprint")
-        q.clear_queue()
-
 fingerprint.fingerprint_index["chromaprint"] = {
         "dbmodel": ChromaprintModel,
         "instance": Chromaprint
@@ -98,9 +99,3 @@ fingerprint.fingerprint_index["chromaprint"] = {
 
 db.create_tables()
 
-def stats():
-    q = queue.FpQueue("ingest_chromaprint")
-    print "Ingest queue size: %s" % q.size()
-
-if __name__ == "__main__":
-    stats()
