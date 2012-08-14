@@ -104,27 +104,22 @@ class Chop30(Chop):
     def __init__(self): pass
     start = None
     duration = 30
+class Chop8(Chop):
+    def __init__(self): pass
+    start = None
+    duration = 8
 class Start30(Chop):
     def __init__(self): pass
     start = 30
     duration = None
-class Start30Chop30(Chop):
-    def __init__(self): pass
-    start = 30
-    duration = 30
-class Start60Chop30(Chop):
-    def __init__(self): pass
-    start = 60
-    duration = 30
 class Start60(Chop):
     def __init__(self): pass
     start = 60
     duration = None
 munge_classes["chop30"] = Chop30
 munge_classes["chop60"] = Chop60
+munge_classes["chop8"] = Chop8
 munge_classes["start30"] = Start30
-munge_classes["start30chop30"] = Start30Chop30
-munge_classes["start60chop30"] = Start60Chop30
 munge_classes["start60"] = Start60
 
 class Bitrate(Munge):
