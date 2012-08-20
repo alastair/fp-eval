@@ -131,6 +131,8 @@ class Result(db.Base):
         self.testfile_id = testfile
         self.run_id = run
         self.result = result
+        self.fptime = fptime
+        self.lookuptime = lookuptime
 
     def __repr__(self):
         return "<Result(run=%d, testfile=%d, result=%s)>" % (self.run_id, self.testfile_id, self.result)
