@@ -53,7 +53,7 @@ class Chop(Munge):
     def getExecCommand(self, fromfile, tofile):
         start = self.start
         dur = self.duration
-        command = ["ffmpeg", "-i", fromfile, "-y"]
+        command = ["ffmpeg", "-i", fromfile, "-b", "128k", "-y"]
         if start:
             command.extend(["-ss", str(start)])
         if dur:
