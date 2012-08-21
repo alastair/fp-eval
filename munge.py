@@ -87,6 +87,22 @@ munge_classes["chop30"] = Chop30
 munge_classes["start30"] = Start30
 munge_classes["start60"] = Start60
 
+class Chop3030(Chop):
+    def __init__(self): pass
+    start = 30
+    duration = 30
+class Chop3015(Chop):
+    def __init__(self): pass
+    start = 30
+    duration = 15
+class Chop308(Chop):
+    def __init__(self): pass
+    start = 30
+    duration = 8
+munge_classes["30chop8"] = Chop308
+munge_classes["30chop15"] = Chop3015
+munge_classes["30chop30"] = Chop3030
+
 class Bitrate(Munge):
     """ Re-encode as MP3 with a different bitrate """
     def __init__(self):
