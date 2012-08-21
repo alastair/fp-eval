@@ -195,7 +195,7 @@ def create_run(testset, fp, mungename):
         if m not in munges:
             raise Exception("Unknown munge %s" % (m))
     testset = int(testset)
-    tscursor = db.session.query(Testset).filter(Testset.id == testset)
+    ts = db.session.query(Testset).get(testset)
     if tscursor.count() == 0:
         raise Exception("Testset %d not in database" % testset)
     run = Run(testset, mungename, fp)
@@ -205,7 +205,25 @@ def create_run(testset, fp, mungename):
     # Once the run has been created, make a queue that contains
     # all the testfiles to be evaluated
     thequeue = queue.FpQueue("run_%s" % run.id)
-    for tf in tscursor.one().testfiles:
+    for tf in ts.testfiles:
+        data = {"testfile_id": tf.id}
+        thequeue.put(data)
+
+def reset_run(run):
+    """Reset a run.
+    Clear the start/end date and all results, then clear and repopulate
+    the queue.
+    """
+    db.session.query(Result).filter(Result.run_id==run).delete()
+    r = db.session.query(Run).get(run)
+    r.started = None
+    r.finished = None
+    db.session.add(r)
+    db.session.commit()
+    thequeue = queue.FpQueue("run_%s" % run)
+    thequeue.clear_queue()
+    thequeue = queue.FpQueue("run_%s" % run)
+    for tf in r.testset.testfiles:
         data = {"testfile_id": tf.id}
         thequeue.put(data)
 
@@ -351,6 +369,7 @@ if __name__ == "__main__":
     mkrun.add_argument("-t", type=int, help="The testset to use for this run")
     mkrun.add_argument("-f", help="Fingerprint algorithm to use")
     mkrun.add_argument("-m", help="comma separated list of munges to run (in order)")
+    mkrun.add_argument("-r", help="Reset a run number")
     mkrun.add_argument("--show-engines", action="store_true", help="Show all fingerprint engines available")
     mkrun.add_argument("--show-munge", action="store_true", help="List munge methods")
 
@@ -377,6 +396,8 @@ if __name__ == "__main__":
             show_munge()
         elif args.show_engines:
             show_fp_engines()
+        elif args.r:
+            reset_run(int(args.r))
         else:
             testset = args.t
             fp = args.f
