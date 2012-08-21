@@ -154,7 +154,7 @@ class Volume(Munge):
         raise NotImplementedException("Run a subclass that supplies a volume")
 
     def getExecCommand(self, fromfile, tofile):
-        command = ["ffmpeg", "-i", fromfile, "-vf", "volume=%s" % self.volume, "-y", tofile]
+        command = ["sox", "-v", "%s" % self.volume, fromfile, tofile]
         return command
 
 class Volume50(Volume):
@@ -219,7 +219,21 @@ class FMFilter(Munge):
               """
 munge_classes["radio"] = FMFilter
 
-class FMSpeed(Munge):
-    """ Adjust the speed and pitch of music """
-    pass
-#munge_classes["radiospeed"] = RadioSpeed
+class Speed(Munge):
+    """ Change the speed and pitch """
+    def __init__(self):
+        raise NotImplementedException("Run a subclass that supplies a speed ratio")
+
+    def getExecCommand(self, fromfile, tofile):
+        command = ["sox", fromfile, tofile, "speed", "%s" % self.speed]
+        return command
+
+class SpeedUp(Speed):
+    def __init__(self): pass
+    speed = 1.05
+class SpeedDown(Speed):
+    def __init__(self): pass
+    # XXX: Is this right?
+    speed = 0.95
+munge_classes["speedup"] = SpeedUp
+munge_classes["speeddown"] = SpeedDown
