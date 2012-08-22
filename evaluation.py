@@ -196,7 +196,7 @@ def create_run(testset, fp, mungename):
             raise Exception("Unknown munge %s" % (m))
     testset = int(testset)
     ts = db.session.query(Testset).get(testset)
-    if tscursor.count() == 0:
+    if ts is None:
         raise Exception("Testset %d not in database" % testset)
     run = Run(testset, mungename, fp)
     db.session.add(run)
