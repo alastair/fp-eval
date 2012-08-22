@@ -65,6 +65,10 @@ class Chop30(Chop):
     def __init__(self): pass
     start = None
     duration = 30
+class Chop35(Chop):
+    def __init__(self): pass
+    start = None
+    duration = 35
 class Chop15(Chop):
     def __init__(self): pass
     start = None
@@ -84,6 +88,7 @@ class Start60(Chop):
 munge_classes["chop8"] = Chop8
 munge_classes["chop15"] = Chop15
 munge_classes["chop30"] = Chop30
+munge_classes["chop35"] = Chop35
 munge_classes["start30"] = Start30
 munge_classes["start60"] = Start60
 
@@ -186,53 +191,22 @@ munge_classes["volume50"] = Volume50
 munge_classes["volume80"] = Volume80
 munge_classes["volume120"] = Volume120
 
-class Lowpass(Munge):
-    """ Low pass filter """
-    pass
-    # lame --lowpass
-#munge_classes["lowpass"] = Lowpass
-
-class Compress(Munge):
-    """ Add compression """
-    pass
-#munge_classes["compress"] = Compress
-
-class EQ(Munge):
-    """ Perform equalisation """
-    pass
-#munge_classes["eq"] = EQ
-
 class FMFilter(Munge):
     """ Similar bandwidth and filters as what comes out of
     the radio """
     def extension(self):
         return "wav"
     def getExecCommand(self, fromfile, tofile):
-        command = ["sox", fromfile, "gain", "-3", "sinc", "8000-", "29", "100", "mcompand",
+        command = ["sox", fromfile, tofile, "gain", "-3", ":", "sinc", "8000-", "29", "100", ":", "mcompand",
                    "0.005,0.1 -47,-40,-34,-34,-17,-33", "100",
                    "0.003,0.05 -47,-40,-34,-34,-17,-33", "400",
                    "0.000625,0.0125 -47,-40,-34,-34,-15,-33", "1600",
                    "0.0001,0.025 -47,-40,-34,-34,-31,-31,-0,-30", "6400",
                    "0,0.025 -38,-31,-28,-28,-0,-25",
-                   "gain", "15", "highpass", "22", "highpass", "22", "sinc", "-n", "255", "-b", "16", "-17500",
-                   "gain", "9", "lowpass", "-1", "17801", tofile
+                   "gain", "15", "highpass", "22", ":", "highpass", "22", ":", "sinc", "-n", "255", "-b", "16", "-17500",
+                   "gain", "9", "lowpass", "-1", "17801"
                 ]
         return command
-    """
-                     play track1.wav gain -3 sinc 8000- 29 100 mcompand \
-                   "0.005,0.1 -47,-40,-34,-34,-17,-33" 100 \
-                   "0.003,0.05 -47,-40,-34,-34,-17,-33" 400 \
-                   "0.000625,0.0125 -47,-40,-34,-34,-15,-33" 1600 \
-                   "0.0001,0.025 -47,-40,-34,-34,-31,-31,-0,-30" 6400 \
-                   "0,0.025 -38,-31,-28,-28,-0,-25" \
-                   gain 15 highpass 22 highpass 22 sinc -n 255 -b 16 -17500 \
-                   gain 9 lowpass -1 17801
-
-              The  audio  file  is  played with a simulated FM radio sound (or
-              broadcast signal condition if the lowpass filter at the  end  is
-              skipped).
-              -- sox(1)
-              """
 munge_classes["radio"] = FMFilter
 
 class Speed(Munge):
@@ -244,12 +218,19 @@ class Speed(Munge):
         command = ["sox", fromfile, tofile, "speed", "%s" % self.speed]
         return command
 
-class SpeedUp(Speed):
+class SpeedUp5(Speed):
     def __init__(self): pass
     speed = 1.05
-class SpeedDown(Speed):
+class SpeedDown5(Speed):
     def __init__(self): pass
-    # XXX: Is this right?
     speed = 0.95
-munge_classes["speedup"] = SpeedUp
-munge_classes["speeddown"] = SpeedDown
+class SpeedUp25(Speed):
+    def __init__(self): pass
+    speed = 1.025
+class SpeedDown25(Speed):
+    def __init__(self): pass
+    speed = 0.975
+munge_classes["speedup5"] = SpeedUp5
+munge_classes["speeddown5"] = SpeedDown5
+munge_classes["speedup25"] = SpeedUp25
+munge_classes["speeddown25"] = SpeedDown25
