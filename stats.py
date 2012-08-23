@@ -67,6 +67,7 @@ def stats(run_id):
     else:
         run = cur.one()
         log.info(run)
+        log.info("%s results so far" % len(run.results))
 
         engine = run.engine
         fptable = fingerprint.fingerprint_index[engine]["dbmodel"]
@@ -89,6 +90,22 @@ def stats(run_id):
         old_queries = 0
         # Negative files
         new_queries = 0
+
+        # We get all of the fp-specific data up front because it's quicker than
+        # doing a single query per result
+        actuals = db.session.query(fptable).join(db.FPFile)\
+                .join(evaluation.Testfile).join(evaluation.Testset)\
+                .join(evaluation.Run).filter(evaluation.Run.id==run.id).all()
+        actual_map = {}
+        for a in actuals:
+            actual_map[a.file_id] = a
+        # Same with the actual files, too
+        # As long as we just make the query, the data turns up in the
+        # object cache!
+        files = db.session.query(db.FPFile)\
+                .join(evaluation.Testfile).join(evaluation.Testset)\
+                .join(evaluation.Run).filter(evaluation.Run.id==run.id).all()
+
         for r in run.results:
             actual = r.result
             if r.testfile.file.negative:
@@ -96,10 +113,9 @@ def stats(run_id):
                 expected = None
             else:
                 old_queries += 1
-                cur = db.session.query(fptable).filter(fptable.file_id == r.testfile.file.id)
-                if cur.count():
-                    real = cur.one()
-                    expected = real.trid
+                fileid = r.testfile.file_id
+                if fileid in actual_map:
+                    expected = actual_map[fileid].trid
                 else:
                     print "NO RESULT FOR", r
                     expected = None
