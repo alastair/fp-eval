@@ -144,7 +144,7 @@ class GSM(Munge):
     def extension(self):
         return "wav"
     def getExecCommand(self, fromfile, tofile):
-        command = ["sox", fromfile, "--encoding", "gsm-full-rate", tofile]
+        command = ["sox", fromfile, "-r", "8000", "-c", "1", "--encoding", "gsm-full-rate", tofile]
         return command
 munge_classes["gsm"] = GSM
 
