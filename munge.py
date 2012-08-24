@@ -154,20 +154,34 @@ class SoundMix(Munge):
         raise NotImplementedException("Run a subclass that supplies a noisefile")
 
     def getExecCommand(self, fromfile, tofile):
-        pass
+        command = ["sox", "-m", fromfile, self.mixfile, tofile]
+        return command
 
-class WhiteNoiseMix(SoundMix):
+class WhiteNoiseMix20(SoundMix):
     def __init__(self): pass
-    pass
-class CarNoiseMix(SoundMix):
+    mixfile = "sounds/white.wav"
+class CarNoiseMix20(SoundMix):
     def __init__(self): pass
-    pass
-class PersonNoiseMix(SoundMix):
+    mixfile = "sounds/car.wav"
+class PersonNoiseMix20(SoundMix):
     def __init__(self): pass
-    pass
-#munge_classes["whitenoise"] = WhiteNoiseMix
-#munge_classes["carnoise"] = CarNoiseMix
-#munge_classes["personnoise"] = PersonNoiseMix
+    mixfile = "sounds/crowd.wav"
+
+class WhiteNoiseMix30(SoundMix):
+    def __init__(self): pass
+    mixfile = "sounds/white.wav"
+class CarNoiseMix30(SoundMix):
+    def __init__(self): pass
+    mixfile = "sounds/car.wav"
+class PersonNoiseMix30(SoundMix):
+    def __init__(self): pass
+    mixfile = "sounds/crowd.wav"
+munge_classes["whitenoise20db"] = WhiteNoiseMix20
+munge_classes["carnoise20db"] = CarNoiseMix20
+munge_classes["personnoise20db"] = PersonNoiseMix20
+munge_classes["whitenoise30db"] = WhiteNoiseMix30
+munge_classes["carnoise30db"] = CarNoiseMix30
+munge_classes["personnoise30db"] = PersonNoiseMix30
 
 class Volume(Munge):
     """ Change the volume """
