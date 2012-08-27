@@ -1,11 +1,16 @@
 import fingerprint
 import db
 import sqlalchemy
+from sqlalchemy.engine.url import URL
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
 import conf
 import eyeD3
 import uuid
 
 from chromaprint_support import acoustid
+from chromaprint_support import tables
 
 if not conf.has_section("chromaprint"):
     raise Exception("No chromaprint configuration section present")
@@ -13,6 +18,10 @@ if not conf.has_section("chromaprint"):
 s = conf.get("chromaprint", "server")
 app_key = conf.get("chromaprint", "app_key")
 api_key = conf.get("chromaprint", "api_key")
+
+dbhost = conf.get("chromaprint", "dbhost")
+dbuser = conf.get("chromaprint", "dbuser")
+dbdb = conf.get("chromaprint", "dbdb")
 
 acoustid.API_BASE_URL = s
 # No rate-limiting
@@ -74,19 +83,38 @@ class Chromaprint(fingerprint.Fingerprinter):
         return (fptime, looktime, response)
 
     def delete_all(self):
-        # Delete the chromaprint database
-        # XXX: Need to connect to postgres
-        # XXX: postgres database needs to be accessible from this machine.
+        u = URL("postgresql", host=dbhost, username=dbuser, database=dbdb)
+        engine = create_engine(u)
+        PgDbSession = sessionmaker(bind=engine)
+        pgsession = PgDbSession()
 
-        """
-        fingerprint_source, fingerprint
-        track_meta_source, track_meta, track_puid_source, track_mbid_source, submission, meta
-        track_puid, track_mbid
-        stats
-        track
+        print pgsession.query(tables.account).all()
 
-        """
+        pgsession.execute(tables.track_foreignid_source.delete())
+        pgsession.execute(tables.track_foreignid.delete())
+        pgsession.execute(tables.track_meta_source.delete())
+        pgsession.execute(tables.track_meta.delete())
+        pgsession.execute(tables.track_puid_source.delete())
+        pgsession.execute(tables.track_puid.delete())
+        pgsession.execute(tables.track_mbid_flag.delete())
+        pgsession.execute(tables.track_mbid_change.delete())
+        pgsession.execute(tables.track_mbid_source.delete())
+        pgsession.execute(tables.track_mbid.delete())
+        pgsession.execute(tables.fingerprint_index_queue.delete())
+        pgsession.execute(tables.fingerprint_source.delete())
+        pgsession.execute(tables.fingerprint.delete())
+        pgsession.execute(tables.foreignid.delete())
+        pgsession.execute(tables.foreignid_vendor.delete())
+        pgsession.execute(tables.stats_top_accounts.delete())
+        pgsession.execute(tables.stats.delete())
+        pgsession.execute(tables.submission.delete())
+        pgsession.execute(tables.meta.delete())
+        pgsession.execute(tables.source.delete())
+        pgsession.execute(tables.format.delete())
+        pgsession.execute(tables.track.delete())
+        pgsession.commit()
 
+        # Delete the index server
 
         # Delete the local database
         db.session.query(ChromaprintModel).delete()
