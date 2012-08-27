@@ -61,9 +61,10 @@ class Chromaprint(fingerprint.Fingerprinter):
                 "artist": artist,
                 "album": album,
                 "track": title,
-                "trackno": "%d" % track,
                 "mbid": fpid
                }
+        if track:
+            data["trackno"] = "%s" % track
         return (fpid, data)
 
     def ingest_single(self, data):
