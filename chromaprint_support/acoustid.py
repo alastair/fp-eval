@@ -298,10 +298,7 @@ def fingerprint_file(path):
     duration and the fingerprint.
     """
     path = os.path.abspath(os.path.expanduser(path))
-    if have_audioread and have_chromaprint:
-        return _fingerprint_file_audioread(path)
-    else:
-        return _fingerprint_file_fpcalc(path)
+    return _fingerprint_file_fpcalc(path)
 
 def match(apikey, path, meta=DEFAULT_META, parse=True):
     """Look up the metadata for an audio file. If ``parse`` is true,
@@ -326,8 +323,7 @@ def submit(apikey, userkey, data):
     ``fingerprint`` key and a ``duration`` key and may include the
     following: ``puid``, ``mbid``, ``track``, ``artist``, ``album``,
     ``albumartist``, ``year``, ``trackno``, ``discno``, ``fileformat``,
-    ``bitrate``.
-    All parameters must be strings
+    ``bitrate``
 
     If the required keys are not present in a dictionary, a
     FingerprintSubmissionError is raised.
