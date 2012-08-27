@@ -128,3 +128,23 @@ fingerprint.fingerprint_index["chromaprint"] = {
 
 db.create_tables()
 
+def stats():
+    cur = db.session.query(ChromaprintModel)
+    print "Number of records: %d" % cur.count()
+
+    u = URL("postgresql", host=dbhost, username=dbuser, database=dbdb)
+    engine = create_engine(u)
+    PgDbSession = sessionmaker(bind=engine)
+    pgsession = PgDbSession()
+
+    cur = pgsession.query(tables.submission)
+    print "Number of submitted entries: %d" % cur.count()
+
+    cur = pgsession.query(tables.submission).filter("handled='f'")
+    print "Number of not imported submitted entries: %d" % cur.count()
+
+    cur = pgsession.query(tables.fingerprint)
+    print "Number of imported entries: %d" % cur.count()
+
+if __name__ == "__main__":
+    stats()
