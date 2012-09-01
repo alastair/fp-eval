@@ -74,7 +74,7 @@ class Echoprint(fingerprint.Fingerprinter):
         # echoprint ingest will take a list then commit
         echoprint_support.fp.ingest(data, do_commit=True)
 
-    def lookup(self, file):
+    def lookup(self, file, metadata={}):
         stime = time.time()
         data = self._codegen(file)
         mtime = time.time()

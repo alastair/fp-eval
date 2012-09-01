@@ -14,8 +14,19 @@ class Fingerprinter(object):
             object suitable to be imported with ingest. """
         raise NotImplementedError()
 
-    def lookup(self, file):
-        """ Look up a file and return the unique fp identifier """
+    def pre_lookup(self, file):
+        """ Called before the lookup method, on the
+            original file used to create the input query,
+            not the query file itself.
+        """
+        return {}
+
+    def lookup(self, file, metadata={}):
+        """ Look up a file and return the unique fp identifier 
+            Arguments:
+               file: the file to look up
+               metadata: any data returned by the pre_fingerprint method
+        """
         # Return a tuple (fingerprint time, lookup time, result)
         # Times should be in milliseconds
         raise NotImplementedError()

@@ -301,6 +301,7 @@ def execute_run(run_id):
         # Find the FpFile that this Testfile points to
         t = db.session.query(Testfile).filter(Testfile.id == data["testfile_id"]).one()
         fpfile = t.file
+        metadata = fp.pre_lookup(fpfile.path)
 
         newpath = munge_file(fpfile.path, munges)
 
@@ -309,7 +310,7 @@ def execute_run(run_id):
             continue
 
         try:
-            fptime, lookuptime, fpresult = fp.lookup(newpath)
+            fptime, lookuptime, fpresult = fp.lookup(newpath, metadata)
             remove_file(newpath)
             result = Result(run, t.id, fpresult, int(fptime), int(lookuptime))
             db.session.add(result)
