@@ -9,6 +9,7 @@ import queue
 import sys
 import importlib
 
+conf.import_fp_modules()
 
 def delete(engine):
     """ Call the delete-specific method for a fingerprint engine to
