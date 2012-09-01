@@ -1,5 +1,8 @@
 Fingerprint evaluation
 ----------------------
+http://www.freesound.org/people/lonemonk/sounds/31487/
+http://www.freesound.org/people/audible-edge/sounds/72830/
+http://www.freesound.org/people/aUREa/sounds/94305/
 
 mysql password: fsud987ydIHJf8K09fIDW2flfdJ  user: fp
 
@@ -9,9 +12,10 @@ sudo /usr/local/sbin/rabbitmqctl set_permissions -p fp fingerprint ".*" ".*" ".*
 
 Requirements
 
-apt-get install rabbitmq-erlang-client rabbitmq-server python-mysqldb python-sqlalchemy python-pika nfs-common python-eyed3 
+apt-get install rabbitmq-erlang-client rabbitmq-server python-mysqldb python-sqlalchemy python-pika nfs-common python-eyed3
+apt-get install sox ffmpeg ubuntu-restricted-extras libsox-fmt-mp3 python-psycopg2
 
-pip install eyeD3 pika 
+pip install eyeD3 pika psycopg2
 
 132.206.14.135:/mnt/store2 /mnt/datasets nfs    ro      0       0
 
@@ -55,6 +59,9 @@ Set up
 To see the acoustid server:
 https://132.206.14.136
 api base url: https://132.206.14.136/ws/v2/
+
+Start the server with this file:
+https://github.com/lalinsky/acoustid-server/blob/master/acoustid/wsgi.py#L4
 
 Get API Key, login with google @gmail
 
