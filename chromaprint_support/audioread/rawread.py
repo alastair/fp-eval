@@ -42,13 +42,6 @@ class RawAudioFile(object):
     """
     def __init__(self, filename):
         try:
-            self._file = aifc.open(filename)
-            self._is_aif = True
-            return
-        except aifc.Error:
-            pass
-
-        try:
             self._file = wave.open(filename)
             self._is_aif = False
             return
