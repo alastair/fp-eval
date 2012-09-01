@@ -156,10 +156,19 @@ class SoundMix(Munge):
     def getExecCommand(self, fromfile, tofile):
         command = ["sox", "-m", fromfile, self.mixfile, tofile]
         return command
-
-class WhiteNoiseMix20(SoundMix):
+class PinkNoiseMix10(SoundMix):
     def __init__(self): pass
-    mixfile = "sounds/white.wav"
+    mixfile = "sounds/pink.wav"
+class CarNoiseMix10(SoundMix):
+    def __init__(self): pass
+    mixfile = "sounds/car.wav"
+class PersonNoiseMix10(SoundMix):
+    def __init__(self): pass
+    mixfile = "sounds/crowd.wav"
+
+class PinkNoiseMix20(SoundMix):
+    def __init__(self): pass
+    mixfile = "sounds/pink.wav"
 class CarNoiseMix20(SoundMix):
     def __init__(self): pass
     mixfile = "sounds/car.wav"
@@ -167,21 +176,25 @@ class PersonNoiseMix20(SoundMix):
     def __init__(self): pass
     mixfile = "sounds/crowd.wav"
 
-class WhiteNoiseMix30(SoundMix):
+class PinkNoiseMix30(SoundMix):
     def __init__(self): pass
-    mixfile = "sounds/white.wav"
+    mixfile = "sounds/pink.wav"
 class CarNoiseMix30(SoundMix):
     def __init__(self): pass
     mixfile = "sounds/car.wav"
 class PersonNoiseMix30(SoundMix):
     def __init__(self): pass
     mixfile = "sounds/crowd.wav"
-munge_classes["whitenoise20db"] = WhiteNoiseMix20
-munge_classes["carnoise20db"] = CarNoiseMix20
-munge_classes["personnoise20db"] = PersonNoiseMix20
-munge_classes["whitenoise30db"] = WhiteNoiseMix30
-munge_classes["carnoise30db"] = CarNoiseMix30
-munge_classes["personnoise30db"] = PersonNoiseMix30
+
+munge_classes["pink10"] = PinkNoiseMix30
+munge_classes["car10"] = CarNoiseMix30
+munge_classes["babble10"] = PersonNoiseMix30
+munge_classes["pink20"] = PinkNoiseMix30
+munge_classes["car20"] = CarNoiseMix30
+munge_classes["babble20"] = PersonNoiseMix30
+munge_classes["pink30"] = PinkNoiseMix30
+munge_classes["car30"] = CarNoiseMix30
+munge_classes["babble30"] = PersonNoiseMix30
 
 class Volume(Munge):
     """ Change the volume """
