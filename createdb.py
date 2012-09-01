@@ -2,20 +2,31 @@
 
 import conf
 import db
+import evaluation
 import log
 
 import os
 import sys
 import math
 import random
+import fingerprint
+
+conf.import_fp_modules()
 
 def main(delete=False):
     num = db.session.query(db.FPFile).count()
     if num > 0 and not delete:
         print >>sys.stderr, "* Database already has %d files in it." % (num)
         print >>sys.stderr, "* run with -d to delete database first"
+        print >>sys.stderr, "** BE WARNED: This will delete ALL results as well"
         sys.exit(1)
     if delete:
+        for k,v in fingerprint.fingerprint_index.items():
+            model = v["dbmodel"]
+            db.sessiobn.query(model).delete()
+        db.session.query(evaluation.Result).delete()
+        db.session.query(evaluation.Run).delete()
+        db.session.query(evaluation.Testfile).delete()
         db.session.query(db.FPFile).delete()
     path = conf.path
     neg = conf.negatives
