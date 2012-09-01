@@ -8,9 +8,11 @@ from sqlalchemy.orm import sessionmaker
 import conf
 import eyeD3
 import uuid
+import time
 
 from chromaprint_support import acoustid
 from chromaprint_support import tables
+from chromaprint_support import audioread
 
 if not conf.has_section("chromaprint"):
     raise Exception("No chromaprint configuration section present")
@@ -43,7 +45,7 @@ class ChromaprintModel(db.Base):
 
 class Chromaprint(fingerprint.Fingerprinter):
     def fingerprint(self, file):
-        (duration, fp) = acoustid.fingerprint_file(file)
+        duration, fp = acoustid.fingerprint_file(file)
         tag = eyeD3.Tag()
         tag.link(file)
         artist = tag.getArtist()
@@ -73,15 +75,28 @@ class Chromaprint(fingerprint.Fingerprinter):
     def ingest_many(self, data):
         acoustid.submit(app_key, api_key, data)
 
-    def lookup(self, file):
+    def pre_lookup(self, file):
+        with audioread.audio_open(file) as f:
+            duration = f.duration
+        return {"duration": duration}
+
+    def lookup(self, file, metadata={}):
         stime = time.time()
-        duration, fp = acoustid.fingerprint_file(path)
+        duration, fp = acoustid.fingerprint_file(file)
+        actual_dur = metadata.get("duration", duration)
         mtime = time.time()
-        response = lookup(app_key, fp, duration, acoustid.DEFAULT_META)
+        response = acoustid.lookup(app_key, fp, actual_dur, acoustid.DEFAULT_META)
         etime = time.time()
         fptime = (mtime-stime)*1000
         looktime = (etime-mtime)*1000
-        return (fptime, looktime, response)
+        answer = None
+        if response.get("status") == "ok":
+            res = response.get("results", [])
+            if len(res):
+                rec = res[0].get("recordings", [])
+                if len(rec):
+                    answer = rec[0].get("id")
+        return (fptime, looktime, answer)
 
     def delete_all(self):
         u = URL("postgresql", host=dbhost, username=dbuser, database=dbdb)
@@ -116,6 +131,7 @@ class Chromaprint(fingerprint.Fingerprinter):
         pgsession.commit()
 
         # Delete the index server
+        # This needs to be done manually
 
         # Delete the local database
         db.session.query(ChromaprintModel).delete()
