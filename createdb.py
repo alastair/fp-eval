@@ -11,8 +11,6 @@ import math
 import random
 import fingerprint
 
-conf.import_fp_modules()
-
 def main(delete=False):
     num = db.session.query(db.FPFile).count()
     if num > 0 and not delete:
@@ -23,7 +21,7 @@ def main(delete=False):
     if delete:
         for k,v in fingerprint.fingerprint_index.items():
             model = v["dbmodel"]
-            db.sessiobn.query(model).delete()
+            db.session.query(model).delete()
         db.session.query(evaluation.Result).delete()
         db.session.query(evaluation.Run).delete()
         db.session.query(evaluation.Testfile).delete()
