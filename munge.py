@@ -150,41 +150,44 @@ munge_classes["gsm"] = GSM
 
 class SoundMix(Munge):
     """ Mix in some other noises """
+    def extension(self):
+        return "wav"
     def __init__(self):
         raise NotImplementedException("Run a subclass that supplies a noisefile")
 
     def getExecCommand(self, fromfile, tofile):
-        command = ["sox", "-m", fromfile, self.mixfile, tofile]
+        command = ["sox", "-m", fromfile, self.mixfile, tofile, "trim", "0", "35"]
         return command
+
 class PinkNoiseMix10(SoundMix):
     def __init__(self): pass
-    mixfile = "sounds/pink.wav"
+    mixfile = "sounds/pink-norm.wav"
 class CarNoiseMix10(SoundMix):
     def __init__(self): pass
-    mixfile = "sounds/car.wav"
+    mixfile = "sounds/car-norm.wav"
 class PersonNoiseMix10(SoundMix):
     def __init__(self): pass
-    mixfile = "sounds/crowd.wav"
+    mixfile = "sounds/babble-norm.wav"
 
 class PinkNoiseMix20(SoundMix):
     def __init__(self): pass
-    mixfile = "sounds/pink.wav"
+    mixfile = "sounds/pink-10.wav"
 class CarNoiseMix20(SoundMix):
     def __init__(self): pass
-    mixfile = "sounds/car.wav"
+    mixfile = "sounds/car2-10.wav"
 class PersonNoiseMix20(SoundMix):
     def __init__(self): pass
-    mixfile = "sounds/crowd.wav"
+    mixfile = "sounds/babble-10.wav"
 
 class PinkNoiseMix30(SoundMix):
     def __init__(self): pass
-    mixfile = "sounds/pink.wav"
+    mixfile = "sounds/pink-20.wav"
 class CarNoiseMix30(SoundMix):
     def __init__(self): pass
-    mixfile = "sounds/car.wav"
+    mixfile = "sounds/car2-20.wav"
 class PersonNoiseMix30(SoundMix):
     def __init__(self): pass
-    mixfile = "sounds/crowd.wav"
+    mixfile = "sounds/babble-20.wav"
 
 munge_classes["pink10"] = PinkNoiseMix30
 munge_classes["car10"] = CarNoiseMix30
