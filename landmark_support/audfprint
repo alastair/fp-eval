@@ -11,7 +11,7 @@
 exe_name=$0
 exe_dir=`dirname "$0"`
 
-MCRROOT=/usr/local/MCR2012a/v717
+MCRROOT=/opt/MATLAB/MATLAB_Compiler_Runtime/v714
 
 MWE_ARCH="glnxa64" ;
 LD_LIBRARY_PATH=.:${MCRROOT}/runtime/${MWE_ARCH} ;
