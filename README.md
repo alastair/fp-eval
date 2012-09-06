@@ -84,6 +84,18 @@ setup.py, change MATLAB_VERSION = 7.3
 
 Install mpg123 and mp3info, symlink into src directory
 
+On the target computer, append the following to your LD_LIBRARY_PATH environment variable:
+
+/usr/local/MCR2012a/v717/runtime/glnxa64:/usr/local/MCR2012a/v717/bin/glnxa64:/usr/local/MCR2012a/v717/sys/os/glnxa64:/usr/local/MCR2012a/v717/sys/java/jre/glnxa64/jre/lib/amd64/native_threads:/usr/local/MCR2012a/v717/sys/java/jre/glnxa64/jre/lib/amd64/server:/usr/local/MCR2012a/v717/sys/java/jre/glnxa64/jre/lib/amd64
+
+Next, set the XAPPLRESDIR environment variable to the following value:
+
+/usr/local/MCR2012a/v717/X11/app-defaults
+====
+and on mac:
+
+On the target computer, append the following to your DYLD_LIBRARY_PATH environment variable:  /Applications/MATLAB/MATLAB_Compiler_Runtime/v717/runtime/maci64:/Applications/MATLAB/MATLAB_Compiler_Runtime/v717/sys/os/maci64:/Applications/MATLAB/MATLAB_Compiler_Runtime/v717/bin/maci64:/System/Library/Frameworks/JavaVM.framework/JavaVM:/System/Library/Frameworks/JavaVM.framework/Libraries    Next, set the XAPPLRESDIR environment variable to the following value:  /Applications/MATLAB/MATLAB_Compiler_Runtime/v717/X11/app-defaults
+
 To run the stuff:
 -----------------
 
