@@ -10,6 +10,8 @@ import queue
 
 import sqlalchemy.dialects.mysql
 import os
+import codecs
+import tempfile
 
 if not conf.has_section("landmark"):
     raise Exception("No landmark configuration section present")
@@ -68,10 +70,20 @@ class Landmark(fingerprint.Fingerprinter):
         args = [FPRINT_PATH, "-dbase", "landmarkdb"]
         if not os.path.exists("landmarkdb.mat"):
             args.extend(["-cleardbase", "1"])
-        args.append("-add")
-        args.extend(data)
+        args.append("-addlist")
+
+        fp,fname = tempfile.mkstemp()
+        os.close(fp)
+        fp = codecs.open(fname, "w", "utf8")
+        for line in data:
+            fp.write("%s\n" % line)
+        fp.close()
+        log.debug("importing from %s" % fname)
+        args.append(fname)
         p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = p.communicate()
+        os.unlink(fname)
+        log.debug(out)
 
     def delete_all(self):
         """ Delete all entries from the local database table
