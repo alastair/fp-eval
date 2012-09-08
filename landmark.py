@@ -76,14 +76,26 @@ class Landmark(fingerprint.Fingerprinter):
         os.close(fp)
         fp = codecs.open(fname, "w", "utf8")
         for line in data:
-            fp.write("%s\n" % line)
+            if "!" not in line and "&" not in line:
+                fp.write("%s\n" % line)
         fp.close()
         log.debug("importing from %s" % fname)
         args.append(fname)
-        p = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = p.communicate()
+        data = self.run_process(args)
         os.unlink(fname)
-        log.debug(out)
+        log.debug(data)
+
+    def run_process(self, args):
+        """ Run some args with subprocess and get *all* stdout """
+        p = subprocess.Popen(args, stdout=subprocess.PIPE)
+        data = ""
+        while True:
+            out = p.stdout.read(1)
+            if out == '' and p.poll() != None:
+                break
+            if out != '':
+                data += out
+        return data
 
     def delete_all(self):
         """ Delete all entries from the local database table
