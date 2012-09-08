@@ -59,7 +59,7 @@ def main(engine):
         cur = db.session.query(db.FPFile).filter(db.FPFile.id == data["id"])
         f = cur.one()
         (trackid, fpdata) = instance.fingerprint(f.path)
-        error = "error" in fpdata
+        error = "error" in fpdata and type(fpdata) == type({})
         if not error:
             ack_handles.append(handle)
             e = engine_table(f, trackid)
