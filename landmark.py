@@ -49,15 +49,48 @@ class Landmark(fingerprint.Fingerprinter):
         """
         The number of files to look up at a time
         """
-        return 100
+        return 99
 
-    def lookup(self, file):
+    def lookup(self, files):
         """ Look up a file and return the unique fp identifier """
-        dt = mlab.mp3read(file)
-        # XXX: This isn't always the samplerate
-        samplerate = 44100
-        r = mlab.match_query(dt, samplerate)
-        return r[1][1]
+        
+        fp,tmpname = tempfile.mkstemp()
+        os.close(fp)
+        fp = codecs.open(tmpname, "w", "utf8")
+        for f in files:
+            fname = f["file"]
+            # We do a quick check that this file actually exists
+            # and is size > 0, so that matlab doesn't hate it.
+            if os.path.exists(fname) and os.path.getsize(fname) > 0:
+                fp.write("%s\n" % fname)
+
+        args = [FPRINT_PATH, "-dbase", "landmarkdb", "-matchlist", tmpname]
+        log.debug("reading from %s" % tmpname)
+        log.debug(args)
+        data = self.run_process(args)
+        res = data.split("\n")
+
+        ret = []
+        for f in files:
+            infile = f["file"]
+            matches = [x for x in res if x.startswith("%s 1" % infile.encode("utf-8"))]
+            if len(matches) == 0:
+                f["result"] = None
+                f["fptime"] = 0
+                f["lookuptime"] = 0
+            else:
+                parts = matches[0].split(" ")
+                name = parts[2:-2]
+                read_path = conf.path
+                name = " ".join(name)
+                shortname = name.replace(read_path, "")
+                if shortname.startswith("/"):
+                    shortname = shortname[1:]
+                f["result"] = shortname
+                f["fptime"] = int(parts[-2])
+                f["lookuptime"] = int(float(parts[-1]) * 100)
+            ret.append(f)
+        return ret
 
     def ingest_many(self, data):
         """ Bulk import a list of data. May loop through data

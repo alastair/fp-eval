@@ -21,6 +21,9 @@ class Fingerprinter(object):
         """
         return {}
 
+    def num_lookups(self):
+        return 1
+
     def lookup(self, file, metadata={}):
         """ Look up a file and return the unique fp identifier 
             Arguments:

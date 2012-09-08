@@ -9,6 +9,7 @@ import queue
 import db
 import sqlalchemy
 from sqlalchemy.orm import relationship, backref
+import sqlalchemy.dialects.mysql
 import random
 import operator
 
@@ -103,11 +104,12 @@ class Run(db.Base):
 class Result(db.Base):
     """ A row for every testset file for a run """
     __tablename__ = "result"
+    __table_args__ = {'mysql_charset': 'utf8'}
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     run_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('run.id'))
     testfile_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testfile.id'))
-    result = sqlalchemy.Column(sqlalchemy.String(50))
+    result = sqlalchemy.Column(sqlalchemy.dialects.mysql.VARCHAR(length=255, charset='utf8'))
     fptime = sqlalchemy.Column(sqlalchemy.Integer)
     lookuptime = sqlalchemy.Column(sqlalchemy.Integer)
 
@@ -292,7 +294,28 @@ def execute_run(run_id):
     thequeue = queue.FpQueue("run_%s" % run.id)
     ack_handles = []
     log.info("Reading queue for run %s. Got %s files" % (run.id, thequeue.size()))
+    num_lookups = fp.num_lookups()
+    to_lookup = []
     count = 0
+
+    def do_fp(to_lookup):
+        try:
+            res = fp.lookup(to_lookup)
+            for r in res:
+                fptime = r["fptime"]
+                lookuptime = r["lookuptime"]
+                fpresult = r["result"]
+                t = r["track"]
+                newpath = r["file"]
+
+                remove_file(newpath)
+                result = Result(run, t.id, fpresult, int(fptime), int(lookuptime))
+                db.session.add(result)
+        except Exception as e:
+            log.warning("Error performing fingerprint")
+            log.warning(e)
+            raise
+
     while True:
         data, handle = thequeue.get()
         if data is None:
@@ -309,22 +332,23 @@ def execute_run(run_id):
             log.warning("File %s doesn't exist, not fingerprinting it" % newpath)
             continue
 
-        try:
-            fptime, lookuptime, fpresult = fp.lookup(newpath, metadata)
-            remove_file(newpath)
-            result = Result(run, t.id, fpresult, int(fptime), int(lookuptime))
-            db.session.add(result)
-        except Exception as e:
-            log.warning("Error performing fingerprint")
-            log.warning(e)
+        to_lookup.append({"track": t, "file": newpath, "data": metadata})
+
+        if len(to_lookup) > num_lookups:
+            do_fp(to_lookup)
+            to_lookup = []
 
         count += 1
-        if count % 10 == 0:
+        if len(to_lookup) == 0 or (num_lookups < 10 and count % 10 == 0):
             log.info("%s more files to evaluate" % thequeue.size())
             db.session.commit()
             for h in ack_handles:
                 thequeue.ack(h)
             ack_handles = []
+
+    if len(to_lookup) > 0:
+        # Last fingerprint
+        do_fp(to_lookup)
 
     # Mark the run as done
     now = datetime.datetime.now().replace(microsecond=0)
