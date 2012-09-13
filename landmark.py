@@ -67,8 +67,13 @@ class Landmark(fingerprint.Fingerprinter):
         args = [FPRINT_PATH, "-dbase", "landmarkdb", "-matchlist", tmpname]
         log.debug("reading from %s" % tmpname)
         log.debug(args)
-        data = self.run_process(args)
+        data, err, retval = self.run_process(args)
         res = data.split("\n")
+
+        if err != "":
+            print "Stderr has content, returning:"
+            print err
+            return None
 
         ret = []
         for f in files:
@@ -114,21 +119,18 @@ class Landmark(fingerprint.Fingerprinter):
         fp.close()
         log.debug("importing from %s" % fname)
         args.append(fname)
-        data = self.run_process(args)
+        data, err, retval = self.run_process(args)
         os.unlink(fname)
         log.debug(data)
 
     def run_process(self, args):
         """ Run some args with subprocess and get *all* stdout """
-        p = subprocess.Popen(args, stdout=subprocess.PIPE)
-        data = ""
-        while True:
-            out = p.stdout.read(1)
-            if out == '' and p.poll() != None:
-                break
-            if out != '':
-                data += out
-        return data
+        outfp,outname = tempfile.mkstemp()
+        errfp,errname = tempfile.mkstemp()
+
+        p = subprocess.Popen(args, stdout=outfp, stderr=errfp)
+        p.wait()
+        return open(outname).read(), open(errname).read(), p.returncode
 
     def delete_all(self):
         """ Delete all entries from the local database table

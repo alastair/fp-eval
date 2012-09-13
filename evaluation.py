@@ -301,6 +301,8 @@ def execute_run(run_id):
     def do_fp(to_lookup):
         try:
             res = fp.lookup(to_lookup)
+            if res is None:
+                return False
             for r in res:
                 fptime = r["fptime"]
                 lookuptime = r["lookuptime"]
@@ -311,6 +313,7 @@ def execute_run(run_id):
                 remove_file(newpath)
                 result = Result(run, t.id, fpresult, int(fptime), int(lookuptime))
                 db.session.add(result)
+            return True
         except Exception as e:
             log.warning("Error performing fingerprint")
             log.warning(e)
@@ -334,28 +337,35 @@ def execute_run(run_id):
 
         to_lookup.append({"track": t, "file": newpath, "data": metadata})
 
+        done_fp = False
         if len(to_lookup) > num_lookups:
-            do_fp(to_lookup)
+            done_fp = do_fp(to_lookup)
+            print "Done lookup, result is %s" % done_fp
             to_lookup = []
 
         count += 1
         if len(to_lookup) == 0 or (num_lookups < 10 and count % 10 == 0):
             log.info("%s more files to evaluate" % thequeue.size())
             db.session.commit()
-            for h in ack_handles:
-                thequeue.ack(h)
+            if done_fp:
+                # XXX: Only ack if correctly completed
+                for h in ack_handles:
+                    thequeue.ack(h)
             ack_handles = []
 
+    done_fp = False
     if len(to_lookup) > 0:
         # Last fingerprint
-        do_fp(to_lookup)
+        done_fp = do_fp(to_lookup)
+        print "last - done_fp is %s" % done_fp
 
     # Mark the run as done
     now = datetime.datetime.now().replace(microsecond=0)
     run.finished = now
     # Finish any acks that are required
-    for h in ack_handles:
-        thequeue.ack(h)
+    if done_fp:
+        for h in ack_handles:
+            thequeue.ack(h)
     db.session.add(run)
     db.session.commit()
 
