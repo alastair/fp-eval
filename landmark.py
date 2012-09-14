@@ -61,11 +61,15 @@ class Landmark(fingerprint.Fingerprinter):
             fname = f["file"]
             # We do a quick check that this file actually exists
             # and is size > 0, so that matlab doesn't hate it.
-            args = ["mp3info", "-r", "m", "-p", "%Q %u %b %r %v * %C %e %E %L %O %o %p", fname]
-            out, err, ret = self.run_process(args)
-            if ret != 0:
-                log.warning("Testing a file with mp3info gave a BAD result")
-                log.warning(fname)
+            if fname.endswith(".mp3"):
+                args = ["mp3info", "-r", "m", "-p", "%Q %u %b %r %v * %C %e %E %L %O %o %p", fname]
+                out, err, ret = self.run_process(args)
+                if ret != 0:
+                    log.warning("Testing a file with mp3info gave a BAD result")
+                    log.warning(fname)
+            else:
+                # If it's not an mp3 (wav) then 'success'
+                ret = 0
             if os.path.exists(fname) and os.path.getsize(fname) > 0 and ret == 0:
                 fp.write("%s\n" % fname)
 
