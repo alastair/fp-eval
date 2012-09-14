@@ -340,9 +340,9 @@ def execute_run(run_id):
         to_lookup.append({"track": t, "file": newpath, "data": metadata})
 
         done_fp = False
-        if len(to_lookup) > num_lookups:
+        if len(to_lookup) >= num_lookups:
             done_fp = do_fp(to_lookup)
-            print "Done lookup, result is %s" % done_fp
+            log.debug("lookup result is: %s (bool)" % done_fp)
             to_lookup = []
 
         count += 1
@@ -350,7 +350,6 @@ def execute_run(run_id):
             log.info("%s more files to evaluate" % thequeue.size())
             db.session.commit()
             if done_fp:
-                # XXX: Only ack if correctly completed
                 for h in ack_handles:
                     thequeue.ack(h)
             ack_handles = []
