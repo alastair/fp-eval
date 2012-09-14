@@ -44,6 +44,15 @@ class NoMunge(Munge):
         return None
 munge_classes["nomunge"] = NoMunge
 
+class WavConvert(Munge):
+    """ Convert anything to wav"""
+    def extension(self):
+        return "wav"
+    def getExecCommand(self, fromfile, tofile):
+        command = ["sox", fromfile, "--encoding", "signed-integer", tofile]
+        return command
+munge_classes["wav"] = WavConvert
+
 class Chop(Munge):
     """ limit the start time or length """
 
