@@ -253,6 +253,8 @@ def munge_file(file, munges):
     # as input or output.
     nomunge = munge.NoMunge()
     tmpfile = nomunge.perform(file)
+    log.debug("input file: %s" % file.encode("utf-8"))
+    log.debug("tmp copy: %s" % tmpfile)
 
     for m in munges:
         log.debug("performing %s" % (m))
