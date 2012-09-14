@@ -78,14 +78,15 @@ class Echoprint(fingerprint.Fingerprinter):
         if len(files) > 1:
             raise Exception("Can only look up one file at a time")
         res = files[0]
+        fname = res["file"]
         stime = time.time()
-        data = self._codegen(file)
+        data = self._codegen(fname)
         mtime = time.time()
-        res = data[0]
-        if "code" in res:
-            code = res["code"]
+        codegen = data[0]
+        if "code" in codegen:
+            code = codegen["code"]
         else:
-            print res
+            print codegen
             code = ""
         match = echoprint_support.fp.best_match_for_query(code)
         etime = time.time()

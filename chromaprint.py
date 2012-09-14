@@ -84,8 +84,9 @@ class Chromaprint(fingerprint.Fingerprinter):
         if len(files) > 1:
             raise Exception("Can only look up one file at a time")
         res = files[0]
+        fname = res["file"]
         stime = time.time()
-        duration, fp = acoustid.fingerprint_file(file)
+        duration, fp = acoustid.fingerprint_file(fname)
         actual_dur = metadata.get("duration", duration)
         mtime = time.time()
         response = acoustid.lookup(app_key, fp, actual_dur, acoustid.DEFAULT_META)
@@ -94,9 +95,9 @@ class Chromaprint(fingerprint.Fingerprinter):
         looktime = (etime-mtime)*1000
         answer = None
         if response.get("status") == "ok":
-            res = response.get("results", [])
-            if len(res):
-                rec = res[0].get("recordings", [])
+            chromaresults = response.get("results", [])
+            if len(chromaresults):
+                rec = chromaresults[0].get("recordings", [])
                 if len(rec):
                     answer = rec[0].get("id")
         res["result"] = answer
