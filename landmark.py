@@ -61,18 +61,25 @@ class Landmark(fingerprint.Fingerprinter):
             fname = f["file"]
             # We do a quick check that this file actually exists
             # and is size > 0, so that matlab doesn't hate it.
-            if os.path.exists(fname) and os.path.getsize(fname) > 0:
+            args = ["mp3info", "-r", "m", "-p", "%Q %u %b %r %v * %C %e %E %L %O %o %p", fname]
+            out, err, ret = self.run_process(args)
+            if ret != 0:
+                log.warning("Testing a file with mp3info gave a BAD result")
+                log.warning(fname)
+            if os.path.exists(fname) and os.path.getsize(fname) > 0 and ret == 0:
                 fp.write("%s\n" % fname)
 
+        fp.close()
         args = [FPRINT_PATH, "-dbase", "landmarkdb", "-matchlist", tmpname]
-        log.debug("reading from %s" % tmpname)
         log.debug(args)
         data, err, retval = self.run_process(args)
         res = data.split("\n")
+        os.unlink(tmpname)
+        log.debug(data)
+        log.debug(err)
 
         if err != "":
-            print "Stderr has content, returning:"
-            print err
+            print "Stderr has content (FAILED) returning."
             return None
 
         ret = []
@@ -130,7 +137,11 @@ class Landmark(fingerprint.Fingerprinter):
 
         p = subprocess.Popen(args, stdout=outfp, stderr=errfp)
         p.wait()
-        return open(outname).read(), open(errname).read(), p.returncode
+        o = open(outname).read()
+        e = open(errname).read()
+        os.unlink(outname)
+        os.unlink(errname)
+        return o, e, p.returncode
 
     def delete_all(self):
         """ Delete all entries from the local database table
