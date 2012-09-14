@@ -49,7 +49,7 @@ class Landmark(fingerprint.Fingerprinter):
         """
         The number of files to look up at a time
         """
-        return 99
+        return 100
 
     def lookup(self, files):
         """ Look up a file and return the unique fp identifier """
