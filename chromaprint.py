@@ -87,7 +87,7 @@ class Chromaprint(fingerprint.Fingerprinter):
         fname = res["file"]
         stime = time.time()
         duration, fp = acoustid.fingerprint_file(fname)
-        actual_dur = metadata.get("duration", duration)
+        actual_dur = res.get("metadata", {}).get("duration", duration)
         mtime = time.time()
         response = acoustid.lookup(app_key, fp, actual_dur, acoustid.DEFAULT_META)
         etime = time.time()
