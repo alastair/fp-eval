@@ -346,7 +346,7 @@ def execute_run(run_id):
             to_lookup = []
 
         count += 1
-        if len(to_lookup) == 0 or (num_lookups < 10 and count % 10 == 0):
+        if (num_lookups > 10 and len(to_lookup) == 0) or (num_lookups < 10 and count % 10 == 0):
             log.info("%s more files to evaluate" % thequeue.size())
             db.session.commit()
             if done_fp:
