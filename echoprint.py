@@ -74,7 +74,10 @@ class Echoprint(fingerprint.Fingerprinter):
         # echoprint ingest will take a list then commit
         echoprint_support.fp.ingest(data, do_commit=True)
 
-    def lookup(self, file, metadata={}):
+    def lookup(self, files):
+        if len(files) > 1:
+            raise Exception("Can only look up one file at a time")
+        res = files[0]
         stime = time.time()
         data = self._codegen(file)
         mtime = time.time()
@@ -89,7 +92,10 @@ class Echoprint(fingerprint.Fingerprinter):
 
         fptime = (mtime-stime)*1000
         looktime = (etime-mtime)*1000
-        return (fptime, looktime, match.TRID)
+        res["result"] = match.TRID
+        res["fptime"] = fptime
+        res["lookuptime"] = looktime
+        return [res]
 
     def delete_all(self):
         # Erase solr and tokyo tyrant

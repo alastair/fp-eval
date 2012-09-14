@@ -80,7 +80,10 @@ class Chromaprint(fingerprint.Fingerprinter):
             duration = f.duration
         return {"duration": duration}
 
-    def lookup(self, file, metadata={}):
+    def lookup(self, files):
+        if len(files) > 1:
+            raise Exception("Can only look up one file at a time")
+        res = files[0]
         stime = time.time()
         duration, fp = acoustid.fingerprint_file(file)
         actual_dur = metadata.get("duration", duration)
@@ -96,7 +99,10 @@ class Chromaprint(fingerprint.Fingerprinter):
                 rec = res[0].get("recordings", [])
                 if len(rec):
                     answer = rec[0].get("id")
-        return (fptime, looktime, answer)
+        res["result"] = answer
+        res["fptime"] = fptime
+        res["lookuptime"] = looktime
+        return [res]
 
     def delete_all(self):
         u = URL("postgresql", host=dbhost, username=dbuser, database=dbdb)
