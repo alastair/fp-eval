@@ -141,8 +141,12 @@ class Landmark(fingerprint.Fingerprinter):
 
         p = subprocess.Popen(args, stdout=outfp, stderr=errfp)
         p.wait()
-        o = open(outname).read()
-        e = open(errname).read()
+        os.close(outfp)
+        os.close(errfp)
+        with open(outname) as fp:
+            o = fp.read()
+        with open(errname) as fp:
+            e = fp.read()
         os.unlink(outname)
         os.unlink(errname)
         return o, e, p.returncode
