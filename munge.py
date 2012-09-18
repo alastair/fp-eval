@@ -217,12 +217,12 @@ class PersonNoiseMix30(SoundMix):
     def __init__(self): pass
     mixfile = "sounds/babble-20.wav"
 
-munge_classes["pink10"] = PinkNoiseMix30
-munge_classes["car10"] = CarNoiseMix30
-munge_classes["babble10"] = PersonNoiseMix30
-munge_classes["pink20"] = PinkNoiseMix30
-munge_classes["car20"] = CarNoiseMix30
-munge_classes["babble20"] = PersonNoiseMix30
+munge_classes["pink10"] = PinkNoiseMix10
+munge_classes["car10"] = CarNoiseMix10
+munge_classes["babble10"] = PersonNoiseMix10
+munge_classes["pink20"] = PinkNoiseMix20
+munge_classes["car20"] = CarNoiseMix20
+munge_classes["babble20"] = PersonNoiseMix20
 munge_classes["pink30"] = PinkNoiseMix30
 munge_classes["car30"] = CarNoiseMix30
 munge_classes["babble30"] = PersonNoiseMix30
