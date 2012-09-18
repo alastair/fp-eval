@@ -27,10 +27,22 @@ class Munge(object):
         os.close(handle)
         command = self.getExecCommand(fromfile, tofile)
         if command is not None:
-            log.debug("performing command")
-            log.debug(" ".join(command))
-            p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            p.communicate()
+            if isinstance(command, tuple):
+                log.debug("performing command")
+                log.debug(" | ".join([" ".join(c) for c in command]))
+                lastc = None
+                for c in command:
+                    stdin = lastc.stdout if lastc else None
+                    com = subprocess.Popen(c, stdin=stdin, stdout=subprocess.PIPE)
+                    if lastc:
+                        lastc.stdout.close()
+                    lastc = com
+                lastc.communicate()
+            else:
+                log.debug("performing command")
+                log.debug(" ".join(command))
+                p = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p.communicate()
         else:
             shutil.copyfile(fromfile, tofile)
         return tofile
@@ -165,8 +177,15 @@ class SoundMix(Munge):
         raise NotImplementedException("Run a subclass that supplies a noisefile")
 
     def getExecCommand(self, fromfile, tofile):
-        command = ["sox", "-m", fromfile, self.mixfile, tofile, "trim", "0", "35"]
-        return command
+        from chromaprint_support import audioread
+        with audioread.audio_open(fromfile) as f:
+            if f.samplerate == 44100:
+                return ["sox", "-m", fromfile, self.mixfile, tofile, "trim", "0", "35"]
+            else:
+                c1 = ["sox", fromfile, "-t", "sox", "-", "trim", "0", "35", "rate", "44100"]
+                c2 = ["sox", "-m", "-t", "sox", "-", self.mixfile, tofile]
+                return (c1, c2)
+        # sox Memory\ Pain.mp3 -t sox - trim 0 35 rate 44100 |sox -m -t sox - sounds/pink-20.wav y.wav
 
 class PinkNoiseMix10(SoundMix):
     def __init__(self): pass
