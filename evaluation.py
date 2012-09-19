@@ -359,6 +359,8 @@ def execute_run(run_id):
         # Last fingerprint
         done_fp = do_fp(to_lookup)
         print "last - done_fp is %s" % done_fp
+    else:
+        done_fp = True
 
     # Mark the run as done
     now = datetime.datetime.now().replace(microsecond=0)
