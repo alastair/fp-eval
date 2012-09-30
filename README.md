@@ -99,25 +99,15 @@ false negative tests - default 10%):
 
     python createdb.py
 
-Import each file with all of the fingerprinters with each FP engine.
+Import each file with a fingerprint engine.
 
-    python ingest.py
-
-You can choose just a single fingerprint type:
-
-    python ingest.py -f echoprint
+    python ingest.py -f echoprint -q # queue
+    python ingest.py -f echoprint -r # run
 
 The import script will incrementally import all files
 for the engine. To delete the already imported files, use
 
-    python ingest.py -d [-f echoprint]
-
-Note that this does not remove any databases that the fingerprint
-system might use. You need to do that yourself. Builtin fp's
-do this with
-    python echoprint.py -d
-    python landmark.py -d
-    python ke.py -d
+    python ingest.py -d -f <engine>
 
 
 
