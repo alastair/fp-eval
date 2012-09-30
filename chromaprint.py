@@ -89,17 +89,20 @@ class Chromaprint(fingerprint.Fingerprinter):
         duration, fp = acoustid.fingerprint_file(fname)
         actual_dur = res.get("data", {}).get("duration", duration)
         mtime = time.time()
-        response = acoustid.lookup(app_key, fp, actual_dur, acoustid.DEFAULT_META)
-        etime = time.time()
-        fptime = (mtime-stime)*1000
-        looktime = (etime-mtime)*1000
         answer = None
-        if response.get("status") == "ok":
-            chromaresults = response.get("results", [])
-            if len(chromaresults):
-                rec = chromaresults[0].get("recordings", [])
-                if len(rec):
-                    answer = rec[0].get("id")
+        try:
+            response = acoustid.lookup(app_key, fp, actual_dur, acoustid.DEFAULT_META)
+            etime = time.time()
+            fptime = (mtime-stime)*1000
+            looktime = (etime-mtime)*1000
+            if response.get("status") == "ok":
+                chromaresults = response.get("results", [])
+                if len(chromaresults):
+                    rec = chromaresults[0].get("recordings", [])
+                    if len(rec):
+                        answer = rec[0].get("id")
+        except acoustid.WebServiceError:
+            pass
         res["result"] = answer
         res["fptime"] = fptime
         res["lookuptime"] = looktime
