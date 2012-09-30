@@ -90,6 +90,8 @@ class Chromaprint(fingerprint.Fingerprinter):
         actual_dur = res.get("data", {}).get("duration", duration)
         mtime = time.time()
         answer = None
+        fptime = 0
+        looktime = 0
         try:
             response = acoustid.lookup(app_key, fp, actual_dur, acoustid.DEFAULT_META)
             etime = time.time()
