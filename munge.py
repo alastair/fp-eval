@@ -178,14 +178,17 @@ class SoundMix(Munge):
 
     def getExecCommand(self, fromfile, tofile):
         from chromaprint_support import audioread
-        with audioread.audio_open(fromfile) as f:
-            if f.samplerate == 44100:
-                return ["sox", "-m", fromfile, self.mixfile, tofile, "trim", "0", "35"]
-            else:
-                c1 = ["sox", fromfile, "-t", "sox", "-", "trim", "0", "35", "rate", "44100"]
-                c2 = ["sox", "-m", "-t", "sox", "-", self.mixfile, tofile]
-                return (c1, c2)
-        # sox Memory\ Pain.mp3 -t sox - trim 0 35 rate 44100 |sox -m -t sox - sounds/pink-20.wav y.wav
+        try:
+            with audioread.audio_open(fromfile) as f:
+                if f.samplerate == 44100:
+                    return ["sox", "-m", fromfile, self.mixfile, tofile, "trim", "0", "35"]
+                else:
+                    c1 = ["sox", fromfile, "-t", "sox", "-", "trim", "0", "35", "rate", "44100"]
+                    c2 = ["sox", "-m", "-t", "sox", "-", self.mixfile, tofile]
+                    return (c1, c2)
+        except audioread.DecodeError:
+            return ["sox", "-m", fromfile, self.mixfile, tofile, "trim", "0", "35"]
+            # sox Memory\ Pain.mp3 -t sox - trim 0 35 rate 44100 |sox -m -t sox - sounds/pink-20.wav y.wav
 
 class PinkNoiseMix10(SoundMix):
     def __init__(self): pass
