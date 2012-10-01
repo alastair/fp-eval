@@ -139,7 +139,8 @@ class Result(db.Base):
     def __repr__(self):
         return "<Result(run=%d, testfile=%d, result=%s)>" % (self.run_id, self.testfile_id, self.result)
 
-db.create_tables()
+def create_tables():
+    db.create_tables()
 
 def create_testset(name, size, holdback):
     """
