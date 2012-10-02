@@ -291,7 +291,16 @@ class SpeedUp25(Speed):
 class SpeedDown25(Speed):
     def __init__(self): pass
     speed = 0.975
+class SpeedUp1(Speed):
+    def __init__(self): pass
+    speed = 1.01
+class SpeedDown1(Speed):
+    def __init__(self): pass
+    speed = 0.99
+
 munge_classes["speedup5"] = SpeedUp5
 munge_classes["speeddown5"] = SpeedDown5
 munge_classes["speedup25"] = SpeedUp25
 munge_classes["speeddown25"] = SpeedDown25
+munge_classes["speedup1"] = SpeedUp1
+munge_classes["speeddown1"] = SpeedDown1
