@@ -43,6 +43,7 @@ def prf(data):
             "numbers_dict":numbers_dict}
 
 def print_prf(prf):
+    log.info("prf")
     print "P %2.4f R %2.4f F %2.4f TNR %2.4f Acc %2.4f %s" % \
             (prf["precision"], prf["recall"], prf["f"],
              prf["true_negative_rate"], prf["accuracy"], str(prf["numbers_dict"]))
@@ -71,6 +72,7 @@ def dpwe(data):
     return dpwe_nums
 
 def print_dpwe(dpwe):
+    log.info("dpwe")
     print "PR %2.4f CAR %2.4f FAR %2.4f FRR %2.4f %s" % \
         (dpwe["pr"], dpwe["car"], dpwe["far"], dpwe["frr"], str(dpwe["numbers_dict"]))
 
@@ -140,7 +142,14 @@ def stats(run_id):
                 log.warning("NO RESULT FOR: %s" % r)
                 expected = None
 
-        if actual:
+        # If we're on landmark, it's a little too eager to match. We store the number of
+        # matching hashes in result.fptime. We only treat it as a match if
+        # fptime > 9 (10 or more hashes match)
+        if engine == "landmark":
+            extra = r.fptime > 9
+        else:
+            extra = True
+        if actual and extra:
             # Result from the lookup
             if expected:
                 if actual == expected:
