@@ -33,7 +33,7 @@ class ChromaprintModel(db.Base):
     __tablename__ = "chromaprint"
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    file_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'))
+    file_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'), nullable=False)
     trid = sqlalchemy.Column(sqlalchemy.String(50))
 
     def __init__(self, file, trid):

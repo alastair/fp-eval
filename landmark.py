@@ -21,7 +21,7 @@ FPRINT_PATH = conf.get("landmark", "audfprint_path")
 class LandmarkModel(db.Base):
     __tablename__ = "landmark"
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    file_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'))
+    file_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'), nullable=False)
     trid = sqlalchemy.Column(sqlalchemy.dialects.mysql.VARCHAR(255, charset='utf8'))
 
     def __init__(self, file, trid):

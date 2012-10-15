@@ -42,8 +42,8 @@ class Testfile(db.Base):
     """ A testfile links together a testset and a file """
     __tablename__ = "testfile"
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    testset_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testset.id'))
-    file_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'))
+    testset_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testset.id'), nullable=False)
+    file_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('file.id'), nullable=False)
 
     file = relationship(db.FPFile)
     testset = relationship(Testset, backref="testfiles")
@@ -65,7 +65,7 @@ class Run(db.Base):
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
     # the testset listing all the files that should be tested in this run
-    testset_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testset.id'))
+    testset_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testset.id'), nullable=False)
     # A list of munge classes
     munge = sqlalchemy.Column(sqlalchemy.String(100))
     # The fp algorithm to use
@@ -107,8 +107,8 @@ class Result(db.Base):
     __table_args__ = {'mysql_charset': 'utf8'}
 
     id = sqlalchemy.Column(sqlalchemy.Integer, primary_key=True)
-    run_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('run.id'))
-    testfile_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testfile.id'))
+    run_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('run.id'), nullable=False)
+    testfile_id = sqlalchemy.Column(sqlalchemy.Integer, sqlalchemy.ForeignKey('testfile.id'), nullable=False)
     result = sqlalchemy.Column(sqlalchemy.dialects.mysql.VARCHAR(length=255, charset='utf8'))
     fptime = sqlalchemy.Column(sqlalchemy.Integer)
     lookuptime = sqlalchemy.Column(sqlalchemy.Integer)
