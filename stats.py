@@ -116,7 +116,7 @@ def stats(run_id):
     # doing a single query per result
     actuals = db.session.query(db.FPFile, fptable, evaluation.Testfile, evaluation.Result).outerjoin(fptable)\
             .join(evaluation.Testfile).join(evaluation.Testset).join(evaluation.Result)\
-            .join(evaluation.Run).filter(evaluation.Run.id==run.id).all()
+            .filter(evaluation.Result.run_id==run.id).all()
     dbfiles = {}
     testfiles = {}
     actual_map = {}
@@ -180,16 +180,25 @@ def print_stats(run):
         print_dpwe(dpwe(data))
         print_prf(prf(data))
 
+def print_count(run):
+    run = int(run)
+    results = db.session.query(evaluation.Result)\
+            .filter(evaluation.Result.run_id==run)
+    print "%3d: %d" % (run, results.count())
+
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("-l", action="store_true", help="list available runs")
     p.add_argument("-r", help="the run to list statistics for")
+    p.add_argument("-c", action="store_true", help="only show the count")
 
     args = p.parse_args()
     if not args.l and not args.r:
         p.print_help()
     elif args.l:
         evaluation.list_runs()
+    elif args.c and args.r:
+        print_count(args.r)
     elif args.r:
         print_stats(args.r)
 

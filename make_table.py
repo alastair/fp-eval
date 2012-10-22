@@ -43,7 +43,7 @@ def length(stat_method):
             i = row.id
             s = stats.stats(i)
             r.append(stat_method(s))
-        percentages = [((p*100), (r*100), (f*100)) for p,r,f, in r]
+        percentages = [((p*100), (r*100), f) for p,r,f, in r]
         restofrow = " & ".join(["%2.2f\%%{}" % (x*100) for x in r])
         print r"%s & %s \\" % (e.title(), restofrow)
     footer()
