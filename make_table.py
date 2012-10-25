@@ -6,6 +6,7 @@ import stats
 import sqlalchemy
 
 import sys
+import argparse
 
 
 def header(cols, stats_method):
@@ -48,16 +49,8 @@ def length(stat_method):
         print r"%s & %s \\" % (e.title(), restofrow)
     footer()
 
-def chroma(stat_method):
-    munge("chromaprint", stat_method)
-
-def echo(stat_method):
-    munge("echoprint", stat_method)
-
-def landmark(stat_method):
-    munge("landmark", stat_method)
-
 def munge(fp, stat_method):
+    """ Calculate the munged runs. fp is the table """
     cols = ["30", "15"]
     header(cols, stat_method)
     rows = ["chop%s", "30chop%s", "chop%s,bitrate96", "chop%s,bitrate64", "chop35,speedup25,chop%s", 
@@ -69,13 +62,6 @@ def munge(fp, stat_method):
             "Volume 120\%{}", "Convert to mono", "22k samplerate", "8k samplerate", "Radio EQ"]
     print_row(fp, rows, row_titles, cols, stat_method)
     footer()
-
-def echonoise(stat_method):
-    noise("echoprint", stat_method)
-def chromanoise(stat_method):
-    noise("chromaprint", stat_method)
-def landnoise(stat_method):
-    noise("landmark", stat_method)
 
 def print_row(fp, rows, row_titles, cols, stat_method):
     for r, t in zip(rows, row_titles):
@@ -95,6 +81,9 @@ def print_row(fp, rows, row_titles, cols, stat_method):
         print r"%s & %s \\" % (t, restofrow)
 
 def noise(fp, stat_method):
+    # Remove noise from the end of the fp name
+    fp = fp.replace("noise", "")
+
     cols = ["30", "15", "8"]
     header(cols, stat_method)
     rows = ["pink10,chop%s", "pink20,chop%s", "pink30,chop%s",
@@ -106,41 +95,49 @@ def noise(fp, stat_method):
     print_row(fp, rows, row_titles, cols, stat_method)
     footer()
 
-def calcprf(data):
-    prf = stats.prf(data)
-    return (prf["precision"], prf["recall"], prf["f"])
+def pertime(ts, stats_method):
+    pass
 
-def calcdpwe(data):
+def calc_pr(data):
+    prf = stats.prf(data)
+    return (prf["precision"], prf["recall"])
+
+def calc_f(data):
+    prf = stats.prf(data)
+    return (prf["f"],)
+
+def calc_pe(data):
     r = stats.dpwe(data)
     return (r["pr"],)
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print "Usage: %s <mode> [stats]" % sys.argv[0]
-        print "mode = length|chroma|echo|landmark|echonoise|chromanoise|landmarknoise"
-        print "stats = method of calculating stats = prf|dpwe"
-    else:
-        a = sys.argv[1]
-        if len(sys.argv) > 2:
-            m = sys.argv[2]
-            if m == "prf":
-                method = calcprf
-            elif m == "dpwe":
-                method = calcdpwe
-            method = sys.argv[2]
-        else:
-            method = calcprf
-        if a == "length":
-            length(method)
-        elif a == "chroma":
-            chroma(method)
-        elif a == "landmark":
-            landmark(method)
-        elif a == "echo":
-            echo(method)
-        elif a == "echonoise":
-            echonoise(method)
-        elif a == "chromanoise":
-            chromanoise(method)
-        elif a == "landmarknoise":
-            landnoise(method)
+
+    p = argparse.ArgumentParser()
+    stats = {"pr": calc_pr,
+            "pe": calc_pe,
+            "f": calc_f
+            }
+    p.add_argument("-s", type=str, choices=stats.keys(), default="pr")
+    modes = {"chromaprint": munge,
+            "echoprint": munge,
+            "landmark": munge,
+            "chromaprintnoise": noise,
+            "echoprintnoise": noise,
+            "landmarknoise": noise,
+            "15sec": pertime,
+            "30sec": pertime,
+            "graph": graph
+            }
+    p.add_argument("mode", type=str, choices=modes.keys())
+
+    args = p.parse_args()
+
+    # The stats method
+    method = stats[args.s]
+
+    # The type of graph to run
+    m = args.mode
+    torun = modes[m]
+
+    # Run the method with the type and stats as arguments
+    torun(m, method)
