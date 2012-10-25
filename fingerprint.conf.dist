@@ -20,3 +20,11 @@ codegen_path: /Users/alastairlocal/code/echoprint-codegen/echoprint-codegen
 server: https://132.206.14.136/ws/v2/
 api_key: 0bB2HTpl
 app_key: PKlUB2YR
+dbhost: 132.206.14.136
+dbuser: acoustid
+dbdb: acoustid
+fpcalc_path: /Users/alastairlocal/code/chromaprint/build/examples/fpcalc
+
+[landmark]
+audfprint_path: /Users/alastairlocal/Downloads/audfprint_MACI64/audfprint
+
