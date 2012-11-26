@@ -67,7 +67,7 @@ def dpwe(data):
     if r1 or r2 or r3:
         frr = (r2 + r3) / (r1 + r2 + r3)
     # probability of error
-    pr = ((old_queries / total_queries) * frr) + ((new_queries / total_queries) * far)    
+    pr = ((old_queries / total_queries) * frr) + ((new_queries / total_queries) * far)
     dpwe_nums = {"pr":pr, "car": car, "far":far, "frr":frr, "numbers_dict":numbers_dict}
     return dpwe_nums
 

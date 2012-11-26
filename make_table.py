@@ -55,13 +55,13 @@ def length(stats_method):
 def munge(fp, stats_method):
     """ Calculate the munged runs. fp is the table """
     cols = ["30", "15"]
-    header(cols, stats_method)
-    rows = ["chop%s", "30chop%s", "chop%s,bitrate96", "chop%s,bitrate64", "chop35,speedup25,chop%s",
-            "chop35,speedup5,chop%s", "chop35,speeddown25,chop%s", "chop35,speeddown5,chop%s",
+    header(["30 second query", "15 second query"], stats_method)
+    rows = ["chop%s", "30chop%s", "chop%s,bitrate96", "chop%s,bitrate64", "chop35,speedup1,chop%s", "chop35,speedup25,chop%s",
+            "chop35,speedup5,chop%s", "chop35,speeddown1,chop%s", "chop35,speeddown25,chop%s", "chop35,speeddown5,chop%s",
             "chop%s,volume50", "chop%s,volume80", "chop%s,volume120", "chop%s,mono", "chop%s,sample22",
             "chop%s,gsm", "chop%s,radio"]
-    row_titles = ["Original query", "Query from 30s", "96k bitrate", "64k bitrate", "Speed up 2.5\%{}",
-            "Speed up 5\%{}", "Slow down 2.5\%{}", "Slow down 5\%{}", "Volume 50\%{}", "Volume 80\%{}",
+    row_titles = ["Original query", "Query from 30s", "96k bitrate", "64k bitrate", "Speed up 1\%{}", "Speed up 2.5\%{}",
+            "Speed up 5\%{}", "Slow down 1\%{}", "Slow down 2.5\%{}", "Slow down 5\%{}", "Volume 50\%{}", "Volume 80\%{}",
             "Volume 120\%{}", "Convert to mono", "22k samplerate", "8k samplerate", "Radio EQ"]
     print_row(fp, rows, row_titles, cols, stats_method)
     footer()
@@ -126,24 +126,26 @@ def print_time_row(querysize, rows, row_titles, cols, stats_method):
                 row = db.session.query(evaluation.Run).filter(evaluation.Run.engine==c).filter(evaluation.Run.munge==munge).one()
                 i = row.id
                 s = stats.stats(i)
-                ret.append(stats_method(s)[1])
+                ret.append(stats_method(s)[1:])
             except sqlalchemy.orm.exc.NoResultFound:
                 ret.append(["-" for x in range(ndpoints)])
+        print ret
         flat = [a for b in ret for a in b]
+        print flat
         restofrow = " & ".join(["%2.2f\%%{}" % i if i != "-" else i for i in flat])
         print r"%s & %s \\" % (t, restofrow)
 
 def calc_pr(data):
     prf = stats.prf(data)
-    return (("Precision", "Recall"), (prf["precision"]*100, prf["recall"]*100))
+    return (("Precision", "Recall"), (prf["precision"]*100, prf["recall"]*100), ("%%", "%%"))
 
 def calc_f(data):
     prf = stats.prf(data)
-    return (("F measure", ), (prf["f"],))
+    return (("f measure", ), (prf["f"],), (None, ))
 
 def calc_pe(data):
     r = stats.dpwe(data)
-    return (("Prob of error", ), (r["pr"],))
+    return (("Prob of error", ), (r["pr"],), ("%%",))
 
 if __name__ == "__main__":
 
