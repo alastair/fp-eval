@@ -48,6 +48,19 @@ def print_prf(prf):
             (prf["precision"], prf["recall"], prf["f"],
              prf["true_negative_rate"], prf["accuracy"], str(prf["numbers_dict"]))
 
+def sensitivity(data):
+    numbers_dict = data["stats"]
+    tp = float(numbers_dict["tp"])
+    fp = float(numbers_dict["fp-a"]) + float(numbers_dict["fp-b"])
+    fn = float(numbers_dict["fn"])
+    tn = float(numbers_dict["tn"])
+
+    sensitivity = tp / (tp + fn)
+    specificity = tn / (tn + fp)
+    return {"sensitivity": sensitivity,
+            "specificity": specificity
+           }
+
 def dpwe(data):
     numbers_dict = data["stats"]
     old_queries = data["old_queries"]

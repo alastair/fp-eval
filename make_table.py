@@ -60,7 +60,7 @@ def munge(fp, stats_method):
             "chop35,speedup5,chop%s", "chop35,speeddown1,chop%s", "chop35,speeddown25,chop%s", "chop35,speeddown5,chop%s",
             "chop%s,volume50", "chop%s,volume80", "chop%s,volume120", "chop%s,mono", "chop%s,sample22",
             "chop%s,gsm", "chop%s,radio"]
-    row_titles = ["Original query", "Query from 30s", "96k bitrate", "64k bitrate", "Speed up 1\%{}", "Speed up 2.5\%{}",
+    row_titles = ["Original audio", "Original from 30s", "96k bitrate", "64k bitrate", "Speed up 1\%{}", "Speed up 2.5\%{}",
             "Speed up 5\%{}", "Slow down 1\%{}", "Slow down 2.5\%{}", "Slow down 5\%{}", "Volume 50\%{}", "Volume 80\%{}",
             "Volume 120\%{}", "Convert to mono", "22k samplerate", "8k samplerate", "Radio EQ"]
     print_row(fp, rows, row_titles, cols, stats_method)
@@ -78,6 +78,8 @@ def print_row(fp, rows, row_titles, cols, stats_method):
                 s = stats.stats(i)
                 ret.append(stats_method(s)[1])
             except sqlalchemy.orm.exc.NoResultFound:
+                print "error, munge", munge
+                raise
                 ret.append(["-" for x in range(ndpoints)])
         flat = [a for b in ret for a in b]
         restofrow = " & ".join(["%2.2f\%%{}" % i if i != "-" else i for i in flat])
@@ -102,10 +104,26 @@ def pertime(ts, stats_method):
     ts = ts.replace("sec", "")
     cols = ["echoprint", "chromaprint", "landmark"]
     header(cols, stats_method)
-    rows = ["pink10,chop%s", "pink20,chop%s", "pink30,chop%s",
+    rows = ["chop%s", "30chop%s", "chop%s,bitrate96", "chop%s,bitrate64", "chop35,speedup1,chop%s", "chop35,speedup25,chop%s",
+            "chop35,speedup5,chop%s", "chop35,speeddown1,chop%s", "chop35,speeddown25,chop%s", "chop35,speeddown5,chop%s",
+            "chop%s,volume50", "chop%s,volume80", "chop%s,volume120", "chop%s,mono", "chop%s,sample22",
+            "chop%s,gsm", "chop%s,radio"]
+    row_titles = ["Original audio", "Original from 30s", "96k bitrate", "64k bitrate", "Speed up 1\%{}", "Speed up 2.5\%{}",
+            "Speed up 5\%{}", "Slow down 1\%{}", "Slow down 2.5\%{}", "Slow down 5\%{}", "Volume 50\%{}", "Volume 80\%{}",
+            "Volume 120\%{}", "Convert to mono", "22k samplerate", "8k samplerate", "Radio EQ"]
+
+    print_time_row(ts, rows, row_titles, cols, stats_method)
+
+    footer()
+
+def pertimenoise(ts, stats_method):
+    ts = ts.replace("secnoise", "")
+    cols = ["echoprint", "chromaprint", "landmark"]
+    header(cols, stats_method)
+    rows = ["chop%s", "pink10,chop%s", "pink20,chop%s", "pink30,chop%s",
             "car10,chop%s", "car20,chop%s", "car30,chop%s",
             "babble10,chop%s", "babble20,chop%s", "babble30,chop%s"]
-    row_titles = ["Pink noise (0dB)","Pink noise (-10dB)","Pink noise (-20dB)",
+    row_titles = ["Original query", "Pink noise (0dB)","Pink noise (-10dB)","Pink noise (-20dB)",
             "Car noise (0dB)","Car noise (-10dB)","Car noise (-20dB)",
             "Babble noise (0dB)","Babble noise (-10dB)","Babble noise (-20dB)"]
 
@@ -126,12 +144,10 @@ def print_time_row(querysize, rows, row_titles, cols, stats_method):
                 row = db.session.query(evaluation.Run).filter(evaluation.Run.engine==c).filter(evaluation.Run.munge==munge).one()
                 i = row.id
                 s = stats.stats(i)
-                ret.append(stats_method(s)[1:])
+                ret.append(stats_method(s)[1])
             except sqlalchemy.orm.exc.NoResultFound:
                 ret.append(["-" for x in range(ndpoints)])
-        print ret
         flat = [a for b in ret for a in b]
-        print flat
         restofrow = " & ".join(["%2.2f\%%{}" % i if i != "-" else i for i in flat])
         print r"%s & %s \\" % (t, restofrow)
 
@@ -147,12 +163,17 @@ def calc_pe(data):
     r = stats.dpwe(data)
     return (("Prob of error", ), (r["pr"],), ("%%",))
 
+def calc_ss(data):
+    r = stats.sensitivity(data)
+    return (("Sensitivity", "Specificity"), (r["sensitivity"]*100, r["specificity"]*100), ("%%", "%%"))
+
 if __name__ == "__main__":
 
     p = argparse.ArgumentParser()
     stat_types = {"pr": calc_pr,
             "pe": calc_pe,
-            "f": calc_f
+            "f": calc_f,
+            "ss": calc_ss
             }
     p.add_argument("-s", type=str, choices=stat_types.keys(), default="pr")
     modes = {"chromaprint": munge,
@@ -161,8 +182,12 @@ if __name__ == "__main__":
             "chromaprintnoise": noise,
             "echoprintnoise": noise,
             "landmarknoise": noise,
+            "8sec": pertime,
             "15sec": pertime,
             "30sec": pertime,
+            "8secnoise": pertimenoise,
+            "15secnoise": pertimenoise,
+            "30secnoise": pertimenoise,
             "graph": graph
             }
     p.add_argument("mode", type=str, choices=modes.keys())
