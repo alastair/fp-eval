@@ -9,13 +9,15 @@
 # True negative: Says it's not there and it isn't
 
 import log
-log.logging.getLogger('sqlalchemy.engine').setLevel(log.logging.INFO)
+#log.logging.getLogger('sqlalchemy.engine').setLevel(log.logging.INFO)
 import db
 import evaluation
 import fingerprint
 
 import sys
 import argparse
+import os
+import json
 
 def prf(data):
     numbers_dict = data["stats"]
@@ -63,8 +65,8 @@ def sensitivity(data):
 
 def dpwe(data):
     numbers_dict = data["stats"]
-    old_queries = data["old_queries"]
-    new_queries = data["new_queries"]
+    old_queries = float(data["old_queries"])
+    new_queries = float(data["new_queries"])
     total_queries = old_queries + new_queries
     # compute dan's measures.. probability of error, false accept rate, correct accept rate, false reject rate
     car = far = frr = pr = 0
@@ -80,7 +82,13 @@ def dpwe(data):
     if r1 or r2 or r3:
         frr = (r2 + r3) / (r1 + r2 + r3)
     # probability of error
+    print "old", old_queries
+    print "new", new_queries
+    print "total", total_queries
+    print "far", far
+    print "frr", frr
     pr = ((old_queries / total_queries) * frr) + ((new_queries / total_queries) * far)
+    print "proberr", pr
     dpwe_nums = {"pr":pr, "car": car, "far":far, "frr":frr, "numbers_dict":numbers_dict}
     return dpwe_nums
 
@@ -114,6 +122,8 @@ def check_run(run_id):
         print_stats()
 
 def stats(run_id):
+    if os.path.exists("stats/%d.json" % run_id):
+        return json.load(open("stats/%d.json" % run_id))
     run = db.session.query(evaluation.Run).get(run_id)
     engine = run.engine
     fptable = fingerprint.fingerprint_index[engine]["dbmodel"]
@@ -185,7 +195,10 @@ def stats(run_id):
                 stats["tn"] += 1
 
     if old_queries + new_queries > 0:
-        return {"stats":stats, "old_queries":old_queries, "new_queries":new_queries}
+        ret = {"stats":stats, "old_queries":old_queries, "new_queries":new_queries}
+        fp = open("stats/%d.json" % run_id, "w")
+        json.dump(ret, fp)
+        return ret
 
 def print_stats(run):
     data = stats(run)
