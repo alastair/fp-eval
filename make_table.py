@@ -131,8 +131,112 @@ def pertimenoise(ts, stats_method):
 
     footer()
 
-def graph(x, y):
-    pass
+def subgraph_perdb(noise):
+    import matplotlib.pyplot as plt
+    lengths = ["8", "15", "30"]
+    levels = ["10", "20", "30"]
+    fp = ["echoprint", "chromaprint", "landmark"]
+    linestyle = ["-", ":", "--"]
+    x = [8, 15, 30]
+    pointstyle = ["o", "^", "+"]
+
+    plt.xlim([5, 55])
+    plt.xlabel("Query length (seconds)")
+    plt.xticks(x)
+    plt.ylabel("Accuracy")
+    plt.ylim([0.0, 1.0])
+    plt.title("Accuracy with added %s noise" % noise)
+
+    count = 1
+    for p, lev in zip(pointstyle, levels):
+        plt.subplot(3, 1, count)
+
+        plt.xlim([5, 45])
+        plt.xlabel("Query length (seconds)")
+        plt.xticks(x)
+        plt.ylabel("Accuracy")
+        plt.ylim([0.0, 1.0])
+        plt.title("Accuracy with added %s noise" % (noise, ))
+
+        count += 1
+        print "noise", lev
+        for line, c in zip(linestyle, fp):
+            print "    fp", c
+            data = []
+            for lng in lengths:
+                print ".",
+                sys.stdout.flush()
+                munge = "%s%s,chop%s" % (noise, lev, lng)
+                row = db.session.query(evaluation.Run).filter(evaluation.Run.engine==c).filter(evaluation.Run.munge==munge).one()
+                i = row.id
+                s = stats.stats(i)
+                accuracy = stats.prf(s)["accuracy"]
+                data.append(accuracy)
+            print ""
+            linefmt = "k%s%s" % (line, p)
+            dbel = 10 - int(lev)
+            lab = "%ddB" % (dbel, )
+            plt.plot(x, data, linefmt, label=lab)
+        plt.legend()
+    plt.savefig("plot-%s-perdb.png" % noise)
+
+def subgraph_perfp(noise):
+    import matplotlib.pyplot as plt
+    lengths = ["8", "15", "30"]
+    levels = ["10", "20", "30"]
+    fp = ["echoprint", "chromaprint", "landmark"]
+    linestyle = ["-", ":", "--"]
+    x = [8, 15, 30]
+    pointstyle = ["o", "^", "+"]
+
+    plt.xlim([5, 55])
+    plt.xlabel("Query length (seconds)")
+    plt.xticks(x)
+    plt.ylabel("Accuracy")
+    plt.ylim([0.0, 1.0])
+    plt.title("Accuracy with added %s noise" % noise)
+
+    count = 1
+    for line, c in zip(linestyle, fp):
+        plt.subplot(3, 1, count)
+
+        plt.xlim([5, 45])
+        plt.xlabel("Query length (seconds)")
+        plt.xticks(x)
+        plt.ylabel("Accuracy")
+        plt.ylim([0.0, 1.0])
+        plt.title("%s accuracy with added %s noise" % (c, noise))
+
+        count += 1
+        print "fp", c
+        for p, lev in zip(pointstyle, levels):
+            print "   noise", lev
+            data = []
+            for lng in lengths:
+                print ".",
+                sys.stdout.flush()
+                munge = "%s%s,chop%s" % (noise, lev, lng)
+                row = db.session.query(evaluation.Run).filter(evaluation.Run.engine==c).filter(evaluation.Run.munge==munge).one()
+                i = row.id
+                s = stats.stats(i)
+                accuracy = stats.prf(s)["accuracy"]
+                data.append(accuracy)
+            print ""
+            linefmt = "k%s%s" % (line, p)
+            dbel = 10 - int(lev)
+            lab = "%ddB" % (dbel, )
+            plt.plot(x, data, linefmt, label=lab)
+        plt.legend()
+    plt.savefig("plot-%s-perfp.png" % noise)
+
+
+def graph(mode, stats_method):
+    noise = ["pink", "car", "babble"]
+    for n in noise:
+        if mode == "graphdb":
+            subgraph_perdb(n)
+        elif mode == "graphfp":
+            subgraph_perfp(n)
 
 def print_time_row(querysize, rows, row_titles, cols, stats_method):
     ndpoints = len(stats_header(stats_method))
@@ -188,7 +292,8 @@ if __name__ == "__main__":
             "8secnoise": pertimenoise,
             "15secnoise": pertimenoise,
             "30secnoise": pertimenoise,
-            "graph": graph
+            "graphfp": graph,
+            "graphdb": graph
             }
     p.add_argument("mode", type=str, choices=modes.keys())
 
