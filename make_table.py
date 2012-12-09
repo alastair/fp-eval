@@ -7,6 +7,7 @@ import sqlalchemy
 
 import sys
 import argparse
+import matplotlib.pyplot as plt
 
 def stats_header(stats_method):
     # Dummy data to see how many things it returns to get the size of the header right
@@ -132,7 +133,6 @@ def pertimenoise(ts, stats_method):
     footer()
 
 def subgraph_perdb(noise):
-    import matplotlib.pyplot as plt
     lengths = ["8", "15", "30"]
     levels = ["10", "20", "30"]
     fp = ["echoprint", "chromaprint", "landmark"]
@@ -140,6 +140,7 @@ def subgraph_perdb(noise):
     x = [8, 15, 30]
     pointstyle = ["o", "^", "+"]
 
+    plt.figure()
     plt.xlim([5, 55])
     plt.xlabel("Query length (seconds)")
     plt.xticks(x)
@@ -151,12 +152,13 @@ def subgraph_perdb(noise):
     for p, lev in zip(pointstyle, levels):
         plt.subplot(3, 1, count)
 
+        dbel = 10 - int(lev)
         plt.xlim([5, 45])
         plt.xlabel("Query length (seconds)")
         plt.xticks(x)
         plt.ylabel("Accuracy")
         plt.ylim([0.0, 1.0])
-        plt.title("Accuracy with added %s noise" % (noise, ))
+        plt.title("Accuracy with %ddB %s noise" % (dbel, noise, ))
 
         count += 1
         print "noise", lev
@@ -174,14 +176,12 @@ def subgraph_perdb(noise):
                 data.append(accuracy)
             print ""
             linefmt = "k%s%s" % (line, p)
-            dbel = 10 - int(lev)
-            lab = "%ddB" % (dbel, )
+            lab = "%s" % (c, )
             plt.plot(x, data, linefmt, label=lab)
         plt.legend()
     plt.savefig("plot-%s-perdb.png" % noise)
 
 def subgraph_perfp(noise):
-    import matplotlib.pyplot as plt
     lengths = ["8", "15", "30"]
     levels = ["10", "20", "30"]
     fp = ["echoprint", "chromaprint", "landmark"]
@@ -189,6 +189,7 @@ def subgraph_perfp(noise):
     x = [8, 15, 30]
     pointstyle = ["o", "^", "+"]
 
+    plt.figure()
     plt.xlim([5, 55])
     plt.xlabel("Query length (seconds)")
     plt.xticks(x)
