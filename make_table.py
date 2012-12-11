@@ -49,7 +49,7 @@ def length(stats_method):
             s = stats.stats(i)
             r.append(stats_method(s))
         percentages = [((p*100), (r*100), f) for p,r,f, in r]
-        restofrow = " & ".join(["%2.2f\%%{}" % (x*100) for x in r])
+        restofrow = " & ".join(["%2.2f" % (x*100) for x in r])
         print r"%s & %s \\" % (e.title(), restofrow)
     footer()
 
@@ -83,7 +83,7 @@ def print_row(fp, rows, row_titles, cols, stats_method):
                 raise
                 ret.append(["-" for x in range(ndpoints)])
         flat = [a for b in ret for a in b]
-        restofrow = " & ".join(["%2.2f\%%{}" % i if i != "-" else i for i in flat])
+        restofrow = " & ".join(["%2.2f" % i if i != "-" else i for i in flat])
         print r"%s & %s \\" % (t, restofrow)
 
 def noise(fp, stats_method):
@@ -253,7 +253,7 @@ def print_time_row(querysize, rows, row_titles, cols, stats_method):
             except sqlalchemy.orm.exc.NoResultFound:
                 ret.append(["-" for x in range(ndpoints)])
         flat = [a for b in ret for a in b]
-        restofrow = " & ".join(["%2.2f\%%{}" % i if i != "-" else i for i in flat])
+        restofrow = " & ".join(["%2.2f" % i if i != "-" else i for i in flat])
         print r"%s & %s \\" % (t, restofrow)
 
 def calc_pr(data):
@@ -268,6 +268,10 @@ def calc_pe(data):
     r = stats.dpwe(data)
     return (("Prob of error", ), (r["pr"],), ("%%",))
 
+def calc_dp(data):
+    dprime = stats.dprime(data)
+    return (("$d'$", ), (dprime,), (None,))
+
 def calc_ss(data):
     r = stats.sensitivity(data)
     return (("Sensitivity", "Specificity"), (r["sensitivity"]*100, r["specificity"]*100), ("%%", "%%"))
@@ -278,7 +282,8 @@ if __name__ == "__main__":
     stat_types = {"pr": calc_pr,
             "pe": calc_pe,
             "f": calc_f,
-            "ss": calc_ss
+            "ss": calc_ss,
+            "dp": calc_dp
             }
     p.add_argument("-s", type=str, choices=stat_types.keys(), default="pr")
     modes = {"chromaprint": munge,

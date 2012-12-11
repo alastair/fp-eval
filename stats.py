@@ -18,6 +18,8 @@ import sys
 import argparse
 import os
 import json
+from scipy.stats import norm
+import numpy
 
 def prf(data):
     numbers_dict = data["stats"]
@@ -82,13 +84,7 @@ def dpwe(data):
     if r1 or r2 or r3:
         frr = (r2 + r3) / (r1 + r2 + r3)
     # probability of error
-    print "old", old_queries
-    print "new", new_queries
-    print "total", total_queries
-    print "far", far
-    print "frr", frr
     pr = ((old_queries / total_queries) * frr) + ((new_queries / total_queries) * far)
-    print "proberr", pr
     dpwe_nums = {"pr":pr, "car": car, "far":far, "frr":frr, "numbers_dict":numbers_dict}
     return dpwe_nums
 
@@ -122,8 +118,8 @@ def check_run(run_id):
         print_stats()
 
 def stats(run_id):
-    if os.path.exists("stats/%d.json" % run_id):
-        return json.load(open("stats/%d.json" % run_id))
+    if os.path.exists("stats/%s.json" % run_id):
+        return json.load(open("stats/%s.json" % run_id))
     run = db.session.query(evaluation.Run).get(run_id)
     engine = run.engine
     fptable = fingerprint.fingerprint_index[engine]["dbmodel"]
@@ -196,15 +192,33 @@ def stats(run_id):
 
     if old_queries + new_queries > 0:
         ret = {"stats":stats, "old_queries":old_queries, "new_queries":new_queries}
-        fp = open("stats/%d.json" % run_id, "w")
+        fp = open("stats/%s.json" % run_id, "w")
         json.dump(ret, fp)
         return ret
+
+def dprime(data):
+    stats = dpwe(data)
+    nums = stats["numbers_dict"]
+    hr = float(nums["tp"]) / (float(nums["tp"]) + float(nums["fn"]))
+    far = stats["far"]
+    if far == 0.0:
+        far += 0.01
+
+    zhr=norm.ppf(stats["car"])
+    zfar=norm.ppf(far)
+    dprime=zhr-zfar
+    return dprime
+
+def print_dprime(data):
+    dprime = dprime(data)
+    print "dprime", dprime
 
 def print_stats(run):
     data = stats(run)
     if data:
         print_dpwe(dpwe(data))
         print_prf(prf(data))
+        print_dprime(data)
 
 def print_count(run):
     run = int(run)
