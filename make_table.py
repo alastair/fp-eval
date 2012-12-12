@@ -8,6 +8,7 @@ import sqlalchemy
 import sys
 import argparse
 import matplotlib.pyplot as plt
+import math
 
 def stats_header(stats_method):
     # Dummy data to see how many things it returns to get the size of the header right
@@ -20,50 +21,73 @@ def header(cols, stats_method):
     # Number data points (p, r, f)
     stats_head = stats_header(stats_method)
     ndpoints = len(stats_head)
-    c = "|".join(["c" for x in range(ndpoints)])
-    fmt = "r|%s" % ("||".join([c for x in range(ncols)]),)
+    c = "".join(["r" for x in range(ndpoints)])
+    fmt = "l|%s" % ("|".join([c for x in range(ncols)]),)
     print r"\begin{tabular}{%s}" % (fmt,)
-    print r" & %s \\" % (" & ".join([r" \multicolumn{%s}{c}{%s}" % (ndpoints, c) for c in cols]), )
+    print r" & %s \\" % (" & ".join([r" \multicolumn{%s}{|c}{%s}" % (ndpoints, c) for c in cols]), )
     print r" & %s \\ \hline" % (" & ".join([" & ".join(stats_head) for x in range(ncols)]), )
-
-def simpleheader(cols):
-    ncols = len(cols)
-    c = ["c" for x in range(ncols)]
-    fmt = "r|%s" % ("|".join(c),)
-    print r"\begin{tabular}{%s}" % (fmt,)
-    print r" & %s \\ \hline" % (" & ".join(cols), )
 
 def footer():
     print r"\end{tabular}"
 
-def length(stats_method):
-    cols = ["30s", "15s", "8s", "30s from 30", "15s from 30", "8s from 30"]
-    simpleheader(cols)
-    rows = ["chromaprint", "echoprint", "landmark"]
-    column_names = ["chop30", "chop15", "chop8", "30chop30", "30chop15", "30chop8"]
+def finalplain(x, y):
+    print r"\subfloat[Precision]{"
+    length(None, calc_prec)
+    print "}"
+    print ""
+
+    print r"\subfloat[Recall]{"
+    length(None, calc_recall)
+    print "}"
+    print ""
+
+    print r"\subfloat[Specificity]{"
+    length(None, calc_spec)
+    print "}"
+    print ""
+
+    print r"\subfloat[d']{"
+    length(None, calc_dp)
+    print "}"
+
+def length(_, stats_method):
+    stats_head = stats_header(stats_method)
+    cols = ["8\,s", "15\,s", "30\,s", "0:30--0:38", "0:30--0:45", "0:30--0:60"]
+    c = ["r" for x in cols*len(stats_head)]
+    fmt = "l%s" % ("".join(c),)
+    print r"\begin{tabular}{%s}" % (fmt,)
+    colspans = [r"\multicolumn{%s}{c}{%s}" % (len(stats_head), cname) for cname in cols]
+    print r" & %s \\" % (" & ".join(colspans), )
+
+    print r"Algorithm & %s \\ \hline" % (" & ".join([" & ".join(stats_head) for x in cols]), )
+    
+    rows = ["echoprint", "chromaprint", "landmark"]
+    column_names = ["chop8", "chop15", "chop30", "30chop8", "30chop15", "30chop30"]
     for e in rows:
         r = []
         for m in column_names:
             row = db.session.query(evaluation.Run).filter(evaluation.Run.engine==e).filter(evaluation.Run.munge==m).one()
             i = row.id
             s = stats.stats(i)
-            r.append(stats_method(s))
-        percentages = [((p*100), (r*100), f) for p,r,f, in r]
-        restofrow = " & ".join(["%2.2f" % (x*100) for x in r])
+            r.append(stats_method(s)[1])
+        flat = [a for b in r for a in b]
+        restofrow = " & ".join(["%2.0f" % i if i != "-" else "" for i in flat])
         print r"%s & %s \\" % (e.title(), restofrow)
     footer()
 
 def munge(fp, stats_method):
     """ Calculate the munged runs. fp is the table """
-    cols = ["30", "15"]
-    header(["30 second query", "15 second query"], stats_method)
-    rows = ["chop%s", "30chop%s", "chop%s,bitrate96", "chop%s,bitrate64", "chop35,speedup1,chop%s", "chop35,speedup25,chop%s",
-            "chop35,speedup5,chop%s", "chop35,speeddown1,chop%s", "chop35,speeddown25,chop%s", "chop35,speeddown5,chop%s",
-            "chop%s,volume50", "chop%s,volume80", "chop%s,volume120", "chop%s,mono", "chop%s,sample22",
+    cols = ["15", "30"]
+    header(["15 second query", "30 second query"], stats_method)
+    rows = ["chop%s", "", "chop%s,bitrate96", "chop%s,bitrate64", "", "chop35,speedup1,chop%s", "chop35,speedup25,chop%s",
+            "chop35,speedup5,chop%s", "", "chop35,speeddown1,chop%s", "chop35,speeddown25,chop%s", "chop35,speeddown5,chop%s",
+            "", "chop%s,volume50", "chop%s,volume80", "chop%s,volume120", "chop%s,mono", "", "chop%s,sample22",
             "chop%s,gsm", "chop%s,radio"]
-    row_titles = ["Original audio", "Original from 30s", "96k bitrate", "64k bitrate", "Speed up 1\%{}", "Speed up 2.5\%{}",
-            "Speed up 5\%{}", "Slow down 1\%{}", "Slow down 2.5\%{}", "Slow down 5\%{}", "Volume 50\%{}", "Volume 80\%{}",
-            "Volume 120\%{}", "Convert to mono", "22k samplerate", "8k samplerate", "Radio EQ"]
+    row_titles = ["\quad Original query", "\quad Reduce bitrate", "\qquad 96\,Kbps", "\qquad 64\,Kbps",
+            "\quad Speed up", "\qquad 1\%{}", "\qquad 2.5\%{}",
+            "\qquad 5\%{}", "\quad Slow down", "\qquad 1\%{}", "\qquad 2.5\%{}", "\qquad 5\%{}", "\quad Adjust volume",
+            "\qquad 50\%{}", "\qquad 80\%{}",
+            "\qquad 120\%{}", "\quad Convert to mono", "\quad Downsample", "\qquad 22\,kHz", "\qquad 8\,kHz", "\quad Radio EQ"]
     print_row(fp, rows, row_titles, cols, stats_method)
     footer()
 
@@ -72,6 +96,9 @@ def print_row(fp, rows, row_titles, cols, stats_method):
     for r, t in zip(rows, row_titles):
         ret = []
         for c in cols:
+            if r == "":
+                ret.append(["-" for i in range(ndpoints)])
+                continue
             munge = r % c
             try:
                 row = db.session.query(evaluation.Run).filter(evaluation.Run.engine==fp).filter(evaluation.Run.munge==munge).one()
@@ -83,7 +110,7 @@ def print_row(fp, rows, row_titles, cols, stats_method):
                 raise
                 ret.append(["-" for x in range(ndpoints)])
         flat = [a for b in ret for a in b]
-        restofrow = " & ".join(["%2.2f" % i if i != "-" else i for i in flat])
+        restofrow = " & ".join(["%2.0f" % i if i != "-" else "" for i in flat])
         print r"%s & %s \\" % (t, restofrow)
 
 def noise(fp, stats_method):
@@ -91,13 +118,14 @@ def noise(fp, stats_method):
     fp = fp.replace("noise", "")
 
     cols = ["30", "15", "8"]
-    header(cols, stats_method)
-    rows = ["pink10,chop%s", "pink20,chop%s", "pink30,chop%s",
-            "car10,chop%s", "car20,chop%s", "car30,chop%s",
-            "babble10,chop%s", "babble20,chop%s", "babble30,chop%s"]
-    row_titles = ["Pink noise (0dB)","Pink noise (-10dB)","Pink noise (-20dB)",
-            "Car noise (0dB)","Car noise (-10dB)","Car noise (-20dB)",
-            "Babble noise (0dB)","Babble noise (-10dB)","Babble noise (-20dB)"]
+    colheads = ["30\,s", "15\,s", "8\,s"]
+    header(colheads, stats_method)
+    rows = ["chop%s", "", "pink10,chop%s", "pink20,chop%s", "pink30,chop%s",
+            "", "car10,chop%s", "car20,chop%s", "car30,chop%s",
+            "", "babble10,chop%s", "babble20,chop%s", "babble30,chop%s"]
+    row_titles = ["\quad Original query", "\quad Pink noise", "\qquad 0\,dB","\qquad -10\,dB","\qquad -20\,dB",
+            "\quad Car noise", "\qquad 0\,dB","\qquad -10\,dB","\qquad -20\,dB",
+            "\quad Babble noise", "\qquad 0\,dB","\qquad -10\,dB","\qquad -20\,dB"]
     print_row(fp, rows, row_titles, cols, stats_method)
     footer()
 
@@ -253,8 +281,78 @@ def print_time_row(querysize, rows, row_titles, cols, stats_method):
             except sqlalchemy.orm.exc.NoResultFound:
                 ret.append(["-" for x in range(ndpoints)])
         flat = [a for b in ret for a in b]
-        restofrow = " & ".join(["%2.2f" % i if i != "-" else i for i in flat])
+        restofrow = " & ".join(["%2.0f" % i if i != "-" else i for i in flat])
         print r"%s & %s \\" % (t, restofrow)
+
+def get_upper_lower(n, d):
+    """Get the 95th percentile estimates for a ratio given
+    the numerator (n) and denominator (d)
+
+    returns (lower, upper) as percentages (0-100) to 0d.p.
+    """
+    p0 = (n + 2) / (d + 4)
+    ll = p0 - 2 * math.sqrt(p0 * (1-p0) / (d + 4))
+    ul = p0 + 2 * math.sqrt(p0 * (1-p0) / (d + 4))
+
+    ll, ul = round(ll*100, 0), round(ul*100, 0)
+    if ll < 0:
+        ll = 0
+    if ul > 100:
+        ul = 100
+    # Abs to get rid of -0
+    return abs(ll), abs(ul)
+
+
+def calc_prec(data):
+    numbers_dict = data["stats"]
+    tp = float(numbers_dict["tp"])
+    fpa = float(numbers_dict["fp-a"])
+    fpb = float(numbers_dict["fp-b"])
+    precision = 0
+
+    n = tp
+    d = tp + fpa + fpb
+    if d:
+        precision = n / d
+
+    ll, ul = get_upper_lower(n, d)
+
+    return ((r"P", r"LL", r"UL"), (round(precision*100, 0), ll, ul), (None, ))
+
+def calc_recall(data):
+    numbers_dict = data["stats"]
+    tp = float(numbers_dict["tp"])
+    tn = float(numbers_dict["tn"])
+    fpa = float(numbers_dict["fp-a"])
+    fpb = float(numbers_dict["fp-b"])
+    fn = float(numbers_dict["fn"])
+
+    recall = 0
+
+    n = tp
+    d = tp + fpa + fn
+    if d:
+        recall = n / d
+
+    ll, ul = get_upper_lower(n, d)
+
+    return ((r"R", r"LL", r"UL"), (round(recall*100, 0), ll, ul), (None, ))
+
+def calc_spec(data):
+    numbers_dict = data["stats"]
+    tn = float(numbers_dict["tn"])
+    fpb = float(numbers_dict["fp-b"])
+
+    specificity = 0
+
+    n = tn
+    d = tn + fpb
+    if d:
+        specificity = n / d
+
+    ll, ul = get_upper_lower(n, d)
+
+    return ((r"S", r"LL", r"UL"), (round(specificity*100, 0), ll, ul), (None, ))
 
 def calc_pr(data):
     prf = stats.prf(data)
@@ -270,11 +368,17 @@ def calc_pe(data):
 
 def calc_dp(data):
     dprime = stats.dprime(data)
-    return (("$d'$", ), (dprime,), (None,))
+    return (("$d'$", ), (round(dprime*100, 2),), (None,))
 
 def calc_ss(data):
     r = stats.sensitivity(data)
     return (("Sensitivity", "Specificity"), (r["sensitivity"]*100, r["specificity"]*100), ("%%", "%%"))
+
+def finalmods(stats):
+    pass
+
+def finalnoise(stats):
+    pass
 
 if __name__ == "__main__":
 
@@ -283,7 +387,10 @@ if __name__ == "__main__":
             "pe": calc_pe,
             "f": calc_f,
             "ss": calc_ss,
-            "dp": calc_dp
+            "dp": calc_dp,
+            "p": calc_prec,
+            "r": calc_recall,
+            "s": calc_spec
             }
     p.add_argument("-s", type=str, choices=stat_types.keys(), default="pr")
     modes = {"chromaprint": munge,
@@ -299,7 +406,10 @@ if __name__ == "__main__":
             "15secnoise": pertimenoise,
             "30secnoise": pertimenoise,
             "graphfp": graph,
-            "graphdb": graph
+            "graphdb": graph,
+            "finalplain": finalplain,
+            "finalmods": finalmods,
+            "finalnoise": finalnoise
             }
     p.add_argument("mode", type=str, choices=modes.keys())
 
