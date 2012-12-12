@@ -34,17 +34,17 @@ def finalplain(x, y):
     print r"\subfloat[Precision]{"
     length(None, calc_prec)
     print "}"
-    print ""
+    print "\n"
 
     print r"\subfloat[Recall]{"
     length(None, calc_recall)
     print "}"
-    print ""
+    print "\n"
 
     print r"\subfloat[Specificity]{"
     length(None, calc_spec)
     print "}"
-    print ""
+    print "\n"
 
     print r"\subfloat[d']{"
     length(None, calc_dp)
@@ -59,6 +59,7 @@ def length(_, stats_method):
     colspans = [r"\multicolumn{%s}{c}{%s}" % (len(stats_head), cname) for cname in cols]
     print r" & %s \\" % (" & ".join(colspans), )
 
+    stats_head = [r"\multicolumn{1}{c}{%s}" % (shname) for shname in stats_head]
     print r"Algorithm & %s \\ \hline" % (" & ".join([" & ".join(stats_head) for x in cols]), )
     
     rows = ["echoprint", "chromaprint", "landmark"]
@@ -71,7 +72,7 @@ def length(_, stats_method):
             s = stats.stats(i)
             r.append(stats_method(s)[1])
         flat = [a for b in r for a in b]
-        restofrow = " & ".join(["%2.0f" % i if i != "-" else "" for i in flat])
+        restofrow = " & ".join([i for i in flat])
         print r"%s & %s \\" % (e.title(), restofrow)
     footer()
 
@@ -91,13 +92,14 @@ def munge(fp, stats_method):
     print_row(fp, rows, row_titles, cols, stats_method)
     footer()
 
-def print_row(fp, rows, row_titles, cols, stats_method):
+def calculate_row(fp, rows, cols, stats_method):
     ndpoints = len(stats_header(stats_method))
-    for r, t in zip(rows, row_titles):
+    all_data = []
+    for r in rows:
         ret = []
         for c in cols:
             if r == "":
-                ret.append(["-" for i in range(ndpoints)])
+                ret.append(["" for i in range(ndpoints)])
                 continue
             munge = r % c
             try:
@@ -110,7 +112,12 @@ def print_row(fp, rows, row_titles, cols, stats_method):
                 raise
                 ret.append(["-" for x in range(ndpoints)])
         flat = [a for b in ret for a in b]
-        restofrow = " & ".join(["%2.0f" % i if i != "-" else "" for i in flat])
+        all_data.append(flat)
+    return all_data
+
+def print_row(fp, rows, row_titles, cols, stats_method):
+    for t, flat in zip(row_titles, calculate_row(fp, rows, cols, stats_method)):
+        restofrow = " & ".join([i for i in flat])
         print r"%s & %s \\" % (t, restofrow)
 
 def noise(fp, stats_method):
@@ -317,7 +324,9 @@ def calc_prec(data):
 
     ll, ul = get_upper_lower(n, d)
 
-    return ((r"P", r"LL", r"UL"), (round(precision*100, 0), ll, ul), (None, ))
+    p = round(precision*100, 0)
+
+    return ((r"P", r"CI"), ("%2.0f" % p, "%2.0f--%2.0f" % (ll, ul)), (None, ))
 
 def calc_recall(data):
     numbers_dict = data["stats"]
@@ -336,7 +345,9 @@ def calc_recall(data):
 
     ll, ul = get_upper_lower(n, d)
 
-    return ((r"R", r"LL", r"UL"), (round(recall*100, 0), ll, ul), (None, ))
+    r = round(recall*100, 0)
+
+    return ((r"R", r"LL", r"UL"), ("%2.0f" % r, "%2.0f" % ll, "%2.0f" % ul), (None, ))
 
 def calc_spec(data):
     numbers_dict = data["stats"]
@@ -351,8 +362,9 @@ def calc_spec(data):
         specificity = n / d
 
     ll, ul = get_upper_lower(n, d)
+    s = round(specificity*100, 0)
 
-    return ((r"S", r"LL", r"UL"), (round(specificity*100, 0), ll, ul), (None, ))
+    return ((r"S", r"CI"), ("%2.0f" % s, "%2.0f--%2.0f" % (ll, ul)), (None, ))
 
 def calc_pr(data):
     prf = stats.prf(data)
@@ -368,17 +380,93 @@ def calc_pe(data):
 
 def calc_dp(data):
     dprime = stats.dprime(data)
-    return (("$d'$", ), (round(dprime*100, 2),), (None,))
+    return (("$d'$", ), ("%2.2f" % round(dprime, 2),), (None,))
 
 def calc_ss(data):
     r = stats.sensitivity(data)
     return (("Sensitivity", "Specificity"), (r["sensitivity"]*100, r["specificity"]*100), ("%%", "%%"))
 
-def finalmods(stats):
-    pass
+def finalnoise(_, stats_method):
+    cols = ["8", "15", "30"]
+    colheads = ["8\,s", "15\,s", "30\,s"]
 
-def finalnoise(stats):
-    pass
+    ncols = len(cols)
+    stats_head = stats_header(stats_method)
+    ndpoints = len(stats_head)
+    sz = ncols*ndpoints
+    c = "".join(["r" for x in range(sz)])
+    fmt = "l|%s" % c
+
+    print r"\begin{tabular}{%s}" % (fmt,)
+    print r" & %s \\" % (" & ".join([r" \multicolumn{%s}{c}{%s}" % (ndpoints, c) for c in colheads]), )
+    print r" & %s \\ \hline" % (" & ".join([" & ".join(stats_head) for x in range(ncols)]), )
+
+    rows = ["chop%s", "", "pink10,chop%s", "pink20,chop%s", "pink30,chop%s",
+            "", "car10,chop%s", "car20,chop%s", "car30,chop%s",
+            "", "babble10,chop%s", "babble20,chop%s", "babble30,chop%s"]
+    row_titles = ["\quad Original query", "\quad Pink noise", "\qquad 0\,dB","\qquad -10\,dB","\qquad -20\,dB",
+            "\quad Car noise", "\qquad 0\,dB","\qquad -10\,dB","\qquad -20\,dB",
+            "\quad Babble noise", "\qquad 0\,dB","\qquad -10\,dB","\qquad -20\,dB"]
+    echoprint = calculate_row("echoprint", rows, cols, stats_method)
+    chromaprint = calculate_row("chromaprint", rows, cols, stats_method)
+    landmark = calculate_row("landmark", rows, cols, stats_method)
+
+    print r"Echoprint & %s \\" % (" & ".join(["" for i in range(sz)]))
+    for data, title in zip(echoprint, row_titles):
+        text = " & ".join([i for i in data])
+        print r"%s & %s \\" % (title, text)
+
+    print r"Chromaprint & %s \\" % (" & ".join(["" for i in range(sz)]))
+    for data, title in zip(chromaprint, row_titles):
+        text = " & ".join([i for i in data])
+        print r"%s & %s \\" % (title, text)
+
+    print r"Landmark & %s \\" % (" & ".join(["" for i in range(sz)]))
+    for data, title in zip(landmark, row_titles):
+        text = " & ".join([i for i in data])
+        print r"%s & %s \\" % (title, text)
+    footer()
+
+def finalmods(_, stats_method):
+    cols = ["15", "30"]
+    colheads = ["15\,s", "30\,s"]
+
+    ncols = len(cols)
+    stats_head = stats_header(stats_method)
+    ndpoints = len(stats_head)
+    print ncols
+    print ndpoints
+    sz = ncols*ndpoints
+    c = "".join(["r" for x in range(ndpoints*3)])
+    fmt = "l|%s" % ("".join([c for x in range(ncols)]),)
+    print r"\begin{tabular}{%s}" % (fmt,)
+    print r"\multicolumn{%s}{c}{Echoprint} & \multicolumn{%s}{c}{Chromaprint} & \multicolumn{%s}{c}{Landmark} \\" % (sz, sz, sz)
+    print r" & %s \\" % (" & ".join([r" \multicolumn{%s}{c}{%s}" % (ndpoints, c) for c in colheads*3]), )
+    print r" & %s \\ \hline" % (" & ".join([" & ".join(stats_head) for x in range(ncols*3)]), )
+
+    rows = ["chop%s", "30chop%s", "chop%s,bitrate96", "chop%s,bitrate64", "chop35,speedup1,chop%s", "chop35,speedup25,chop%s",
+            "chop35,speedup5,chop%s", "chop35,speeddown1,chop%s", "chop35,speeddown25,chop%s", "chop35,speeddown5,chop%s",
+            "chop%s,volume50", "chop%s,volume80", "chop%s,volume120", "chop%s,mono", "chop%s,sample22",
+            "chop%s,gsm", "chop%s,radio"]
+    row_titles = ["Original audio", "Original from 30s", "96k bitrate", "64k bitrate", "Speed up 1\%{}", "Speed up 2.5\%{}",
+            "Speed up 5\%{}", "Slow down 1\%{}", "Slow down 2.5\%{}", "Slow down 5\%{}", "Volume 50\%{}", "Volume 80\%{}",
+            "Volume 120\%{}", "Convert to mono", "22k samplerate", "8k samplerate", "Radio EQ"]
+
+
+
+    echoprint = calculate_row("echoprint", rows, cols, stats_method)
+    chromaprint = calculate_row("chromaprint", rows, cols, stats_method)
+    landmark = calculate_row("landmark", rows, cols, stats_method)
+
+    for i, title in enumerate(row_titles):
+        epd = echoprint[i]
+        cpd = chromaprint[i]
+        lmd = landmark[i]
+        ep_text = " & ".join([i for i in epd])
+        cp_text = " & ".join([i for i in cpd])
+        lm_text = " & ".join([i for i in lmd])
+        print r"%s & %s & %s & %s \\" % (title, ep_text, cp_text, lm_text)
+    footer()
 
 if __name__ == "__main__":
 

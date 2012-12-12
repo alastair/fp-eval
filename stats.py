@@ -39,8 +39,8 @@ def prf(data):
         true_negative_rate = tn / (tn + fp)
     if tp or tn or fp or fn:
         accuracy = (tp+tn) / (tp + tn + fp + fn)
-    return {"precision":precision,
-            "recall":recall,
+    return {"precision": round(precision),
+            "recall":round(recall),
             "f":f,
             "true_negative_rate":true_negative_rate,
             "accuracy":accuracy,
@@ -55,14 +55,15 @@ def print_prf(prf):
 def sensitivity(data):
     numbers_dict = data["stats"]
     tp = float(numbers_dict["tp"])
-    fp = float(numbers_dict["fp-a"]) + float(numbers_dict["fp-b"])
+    fpa = float(numbers_dict["fp-a"])
+    fpb = float(numbers_dict["fp-b"])
     fn = float(numbers_dict["fn"])
     tn = float(numbers_dict["tn"])
 
     sensitivity = tp / (tp + fn)
-    specificity = tn / (tn + fp)
-    return {"sensitivity": sensitivity,
-            "specificity": specificity
+    specificity = tn / (tn + fpb)
+    return {"sensitivity": round(sensitivity),
+            "specificity": round(specificity)
            }
 
 def dpwe(data):
@@ -159,7 +160,8 @@ def stats(run_id):
                 expected = actual_map[f_id].trid
             else:
                 log.warning("NO RESULT FOR: %s" % r)
-                expected = None
+                log.warning("actual is %s" % actual)
+                expected = True
 
         # If we're on landmark, it's a little too eager to match. We store the number of
         # matching hashes in result.fptime. We only treat it as a match if
@@ -210,8 +212,8 @@ def dprime(data):
     return dprime
 
 def print_dprime(data):
-    dprime = dprime(data)
-    print "dprime", dprime
+    dp = dprime(data)
+    print "dprime", dp
 
 def print_stats(run):
     data = stats(run)
