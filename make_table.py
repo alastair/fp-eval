@@ -434,8 +434,6 @@ def finalmods(_, stats_method):
     ncols = len(cols)
     stats_head = stats_header(stats_method)
     ndpoints = len(stats_head)
-    print ncols
-    print ndpoints
     sz = ncols*ndpoints
     c = "".join(["r" for x in range(ndpoints*3)])
     fmt = "l|%s" % ("".join([c for x in range(ncols)]),)
@@ -444,13 +442,15 @@ def finalmods(_, stats_method):
     print r" & %s \\" % (" & ".join([r" \multicolumn{%s}{c}{%s}" % (ndpoints, c) for c in colheads*3]), )
     print r" & %s \\ \hline" % (" & ".join([" & ".join(stats_head) for x in range(ncols*3)]), )
 
-    rows = ["chop%s", "30chop%s", "chop%s,bitrate96", "chop%s,bitrate64", "chop35,speedup1,chop%s", "chop35,speedup25,chop%s",
-            "chop35,speedup5,chop%s", "chop35,speeddown1,chop%s", "chop35,speeddown25,chop%s", "chop35,speeddown5,chop%s",
-            "chop%s,volume50", "chop%s,volume80", "chop%s,volume120", "chop%s,mono", "chop%s,sample22",
+    rows = ["chop%s", "", "chop%s,bitrate96", "chop%s,bitrate64", "", "chop35,speedup1,chop%s", "chop35,speedup25,chop%s",
+            "chop35,speedup5,chop%s", "", "chop35,speeddown1,chop%s", "chop35,speeddown25,chop%s", "chop35,speeddown5,chop%s",
+            "", "chop%s,volume50", "chop%s,volume80", "chop%s,volume120", "chop%s,mono", "", "chop%s,sample22",
             "chop%s,gsm", "chop%s,radio"]
-    row_titles = ["Original audio", "Original from 30s", "96k bitrate", "64k bitrate", "Speed up 1\%{}", "Speed up 2.5\%{}",
-            "Speed up 5\%{}", "Slow down 1\%{}", "Slow down 2.5\%{}", "Slow down 5\%{}", "Volume 50\%{}", "Volume 80\%{}",
-            "Volume 120\%{}", "Convert to mono", "22k samplerate", "8k samplerate", "Radio EQ"]
+    row_titles = ["\quad Original query", "\quad Reduce bitrate", "\qquad 96\,Kbps", "\qquad 64\,Kbps",
+            "\quad Speed up", "\qquad 1\%{}", "\qquad 2.5\%{}",
+            "\qquad 5\%{}", "\quad Slow down", "\qquad 1\%{}", "\qquad 2.5\%{}", "\qquad 5\%{}", "\quad Adjust volume",
+            "\qquad 50\%{}", "\qquad 80\%{}",
+            "\qquad 120\%{}", "\quad Convert to mono", "\quad Downsample", "\qquad 22\,kHz", "\qquad 8\,kHz", "\quad Radio EQ"]
 
 
 
