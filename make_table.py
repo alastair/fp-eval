@@ -53,8 +53,12 @@ def finalplain(x, y):
 def length(_, stats_method):
     stats_head = stats_header(stats_method)
     cols = ["8\,s", "15\,s", "30\,s", "0:30--0:38", "0:30--0:45", "0:30--0:60"]
-    c = ["r" for x in cols*len(stats_head)]
-    fmt = "l%s" % ("".join(c),)
+    if len(stats_head) == 3: # val, lower, upper
+        stub = "rr@{--}l"
+    else:
+        stub = "r"
+    c = stub*len(cols)
+    fmt = "l%s" % c
     print r"\begin{tabular}{%s}" % (fmt,)
     colspans = [r"\multicolumn{%s}{c}{%s}" % (len(stats_head), cname) for cname in cols]
     print r" & %s \\" % (" & ".join(colspans), )
@@ -326,7 +330,7 @@ def calc_prec(data):
 
     p = round(precision*100, 0)
 
-    return ((r"P", r"CI"), ("%2.0f" % p, "%2.0f--%2.0f" % (ll, ul)), (None, ))
+    return ((r"P", r"LL", r"UL"), ("%2.0f" % p, "%2.0f" % ll, "%2.0f" % ul), (None, ))
 
 def calc_recall(data):
     numbers_dict = data["stats"]
@@ -364,7 +368,7 @@ def calc_spec(data):
     ll, ul = get_upper_lower(n, d)
     s = round(specificity*100, 0)
 
-    return ((r"S", r"CI"), ("%2.0f" % s, "%2.0f--%2.0f" % (ll, ul)), (None, ))
+    return ((r"S", r"LL", r"UL"), ("%2.0f" % s, "%2.0f" % ll, "%2.0f" % ul), (None, ))
 
 def calc_pr(data):
     prf = stats.prf(data)
@@ -394,12 +398,23 @@ def finalnoise(_, stats_method):
     stats_head = stats_header(stats_method)
     ndpoints = len(stats_head)
     sz = ncols*ndpoints
-    c = "".join(["r" for x in range(sz)])
-    fmt = "l|%s" % c
+    if len(stats_head) == 3: # val, lower, upper
+        stub = "r@{\hskip 12pt}r@{--}l"
+    else:
+        stub = "r"
+    c = [stub for i in cols]
+    c = "@{\hskip 18pt}".join(c*ncols)
+    fmt = "l@{\hskip 18pt}%s" % c
 
     print r"\begin{tabular}{%s}" % (fmt,)
+    print r"\toprule"
     print r" & %s \\" % (" & ".join([r" \multicolumn{%s}{c}{%s}" % (ndpoints, c) for c in colheads]), )
-    print r" & %s \\ \hline" % (" & ".join([" & ".join(stats_head) for x in range(ncols)]), )
+    for i in range(ncols):
+        print r" \cmidrule(r){%s-%s} " % (2+i*ndpoints, 1+ndpoints+i*ndpoints),
+    print ""
+
+    print r" & %s \\" % (" & ".join([" & ".join(stats_head) for x in range(ncols)]), )
+    print r"\midrule"
 
     rows = ["chop%s", "", "pink10,chop%s", "pink20,chop%s", "pink30,chop%s",
             "", "car10,chop%s", "car20,chop%s", "car30,chop%s",
@@ -411,20 +426,30 @@ def finalnoise(_, stats_method):
     chromaprint = calculate_row("chromaprint", rows, cols, stats_method)
     landmark = calculate_row("landmark", rows, cols, stats_method)
 
-    print r"Echoprint & %s \\" % (" & ".join(["" for i in range(sz)]))
+    print r"Echoprint & \\" 
     for data, title in zip(echoprint, row_titles):
-        text = " & ".join([i for i in data])
+        if data[0] == "":
+            text = ""
+        else:
+            text = " & ".join([i for i in data])
         print r"%s & %s \\" % (title, text)
 
-    print r"Chromaprint & %s \\" % (" & ".join(["" for i in range(sz)]))
+    print r"Chromaprint & \\" 
     for data, title in zip(chromaprint, row_titles):
-        text = " & ".join([i for i in data])
+        if data[0] == "":
+            text = ""
+        else:
+            text = " & ".join([i for i in data])
         print r"%s & %s \\" % (title, text)
 
-    print r"Landmark & %s \\" % (" & ".join(["" for i in range(sz)]))
+    print r"Landmark & \\" 
     for data, title in zip(landmark, row_titles):
-        text = " & ".join([i for i in data])
+        if data[0] == "":
+            text = ""
+        else:
+            text = " & ".join([i for i in data])
         print r"%s & %s \\" % (title, text)
+    print r"\bottomrule"
     footer()
 
 def finalmods(_, stats_method):
@@ -435,11 +460,27 @@ def finalmods(_, stats_method):
     stats_head = stats_header(stats_method)
     ndpoints = len(stats_head)
     sz = ncols*ndpoints
-    c = "".join(["r" for x in range(ndpoints*3)])
-    fmt = "l|%s" % ("".join([c for x in range(ncols)]),)
+    if len(stats_head) == 3: # val, lower, upper
+        stub = "rr@{--}l"
+    else:
+        stub = "r"
+    c = stub * ndpoints * 3
+    fmt = "l%s" % (c * ncols)
     print r"\begin{tabular}{%s}" % (fmt,)
-    print r"\multicolumn{%s}{c}{Echoprint} & \multicolumn{%s}{c}{Chromaprint} & \multicolumn{%s}{c}{Landmark} \\" % (sz, sz, sz)
+
+    #Algorithm
+    print r" & \multicolumn{%s}{c}{Echoprint} & \multicolumn{%s}{c}{Chromaprint} & \multicolumn{%s}{c}{Landmark} \\" % (sz, sz, sz)
+    for i in range(3):
+        print r" \cmidrule(r){%s-%s} " % (2+i*sz, 1+sz+i*sz),
+    print ""
+
+    # Times
     print r" & %s \\" % (" & ".join([r" \multicolumn{%s}{c}{%s}" % (ndpoints, c) for c in colheads*3]), )
+    for i in range(3*ncols):
+        print r" \cmidrule(r){%s-%s} " % (2+i*ndpoints, 1+ndpoints+i*ndpoints),
+    print ""
+    
+    # Metric headings
     print r" & %s \\ \hline" % (" & ".join([" & ".join(stats_head) for x in range(ncols*3)]), )
 
     rows = ["chop%s", "", "chop%s,bitrate96", "chop%s,bitrate64", "", "chop35,speedup1,chop%s", "chop35,speedup25,chop%s",
@@ -462,10 +503,13 @@ def finalmods(_, stats_method):
         epd = echoprint[i]
         cpd = chromaprint[i]
         lmd = landmark[i]
-        ep_text = " & ".join([i for i in epd])
-        cp_text = " & ".join([i for i in cpd])
-        lm_text = " & ".join([i for i in lmd])
-        print r"%s & %s & %s & %s \\" % (title, ep_text, cp_text, lm_text)
+        if epd[0] == "":
+            print r"%s & \\" % (title, )
+        else:
+            ep_text = " & ".join([i for i in epd])
+            cp_text = " & ".join([i for i in cpd])
+            lm_text = " & ".join([i for i in lmd])
+            print r"%s & %s & %s & %s \\" % (title, ep_text, cp_text, lm_text)
     footer()
 
 if __name__ == "__main__":
