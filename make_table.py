@@ -426,7 +426,7 @@ def finalnoise(_, stats_method):
     chromaprint = calculate_row("chromaprint", rows, cols, stats_method)
     landmark = calculate_row("landmark", rows, cols, stats_method)
 
-    print r"Echoprint & \\" 
+    print r"\textsc{Echoprint} & \\" 
     for data, title in zip(echoprint, row_titles):
         if data[0] == "":
             text = ""
@@ -434,7 +434,8 @@ def finalnoise(_, stats_method):
             text = " & ".join([i for i in data])
         print r"%s & %s \\" % (title, text)
 
-    print r"Chromaprint & \\" 
+    print r"\midrule"
+    print r"\textsc{Chromaprint} & \\" 
     for data, title in zip(chromaprint, row_titles):
         if data[0] == "":
             text = ""
@@ -442,7 +443,8 @@ def finalnoise(_, stats_method):
             text = " & ".join([i for i in data])
         print r"%s & %s \\" % (title, text)
 
-    print r"Landmark & \\" 
+    print r"\midrule"
+    print r"\textsc{Landmark} & \\" 
     for data, title in zip(landmark, row_titles):
         if data[0] == "":
             text = ""

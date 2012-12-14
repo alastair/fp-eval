@@ -201,12 +201,14 @@ def stats(run_id):
 def dprime(data):
     stats = dpwe(data)
     nums = stats["numbers_dict"]
-    hr = float(nums["tp"]) / (float(nums["tp"]) + float(nums["fn"]))
     far = stats["far"]
     if far == 0.0:
         far += 0.01
+    car = stats["car"]
+    if car == 0.0:
+        car += 0.01
 
-    zhr=norm.ppf(stats["car"])
+    zhr=norm.ppf(car)
     zfar=norm.ppf(far)
     dprime=zhr-zfar
     return dprime
