@@ -211,6 +211,8 @@ def dprime(data):
     zhr=norm.ppf(car)
     zfar=norm.ppf(far)
     dprime=zhr-zfar
+    if dprime < 0:
+        dprime = 0.0
     return dprime
 
 def print_dprime(data):
