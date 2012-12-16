@@ -28,20 +28,21 @@ def header(cols, stats_method):
     print r" & %s \\ \hline" % (" & ".join([" & ".join(stats_head) for x in range(ncols)]), )
 
 def footer():
+    print r"\bottomrule"
     print r"\end{tabular}"
 
 def finalplain(x, y):
-    print r"\subfloat[Precision]{"
+    print r"\subfloat[Precision (\%)]{"
     length(None, calc_prec)
     print "}"
     print "\n"
 
-    print r"\subfloat[Recall]{"
+    print r"\subfloat[Recall (\%)]{"
     length(None, calc_recall)
     print "}"
     print "\n"
 
-    print r"\subfloat[Specificity]{"
+    print r"\subfloat[Specificity (\%)]{"
     length(None, calc_spec)
     print "}"
     print "\n"
@@ -60,11 +61,13 @@ def length(_, stats_method):
     c = stub*len(cols)
     fmt = "l%s" % c
     print r"\begin{tabular}{%s}" % (fmt,)
+    print r"\toprule"
     colspans = [r"\multicolumn{%s}{c}{%s}" % (len(stats_head), cname) for cname in cols]
-    print r" & %s \\" % (" & ".join(colspans), )
+    print r"Query length & %s \\" % (" & ".join(colspans), )
 
     stats_head = [r"\multicolumn{1}{c}{%s}" % (shname) for shname in stats_head]
-    print r"Algorithm & %s \\ \hline" % (" & ".join([" & ".join(stats_head) for x in cols]), )
+    print r"Algorithm & %s \\" % (" & ".join([" & ".join(stats_head) for x in cols]), )
+    print r"\midrule"
     
     rows = ["echoprint", "chromaprint", "landmark"]
     column_names = ["chop8", "chop15", "chop30", "30chop8", "30chop15", "30chop30"]
@@ -78,6 +81,7 @@ def length(_, stats_method):
         flat = [a for b in r for a in b]
         restofrow = " & ".join([i for i in flat])
         print r"%s & %s \\" % (e.title(), restofrow)
+
     footer()
 
 def munge(fp, stats_method):
@@ -88,11 +92,11 @@ def munge(fp, stats_method):
             "chop35,speedup5,chop%s", "", "chop35,speeddown1,chop%s", "chop35,speeddown25,chop%s", "chop35,speeddown5,chop%s",
             "", "chop%s,volume50", "chop%s,volume80", "chop%s,volume120", "chop%s,mono", "", "chop%s,sample22",
             "chop%s,gsm", "chop%s,radio"]
-    row_titles = ["\quad Original query", "\quad Reduce bitrate", "\qquad 96\,Kbps", "\qquad 64\,Kbps",
-            "\quad Speed up", "\qquad 1\%{}", "\qquad 2.5\%{}",
-            "\qquad 5\%{}", "\quad Slow down", "\qquad 1\%{}", "\qquad 2.5\%{}", "\qquad 5\%{}", "\quad Adjust volume",
-            "\qquad 50\%{}", "\qquad 80\%{}",
-            "\qquad 120\%{}", "\quad Convert to mono", "\quad Downsample", "\qquad 22\,kHz", "\qquad 8\,kHz", "\quad Radio EQ"]
+    row_titles = ["Original query", "Reduce bitrate", "\quad 96\,Kbps", "\quad 64\,Kbps",
+            "Speed up", "\quad 1\%{}", "\quad 2.5\%{}",
+            "\quad 5\%{}", "Slow down", "\quad 1\%{}", "\quad 2.5\%{}", "\quad 5\%{}", "Adjust volume",
+            "\quad 50\%{}", "\quad 80\%{}",
+            "\quad 120\%{}", "Convert to mono", "Downsample", "\quad 22\,kHz", "\quad 8\,kHz", "Radio EQ"]
     print_row(fp, rows, row_titles, cols, stats_method)
     footer()
 
@@ -399,12 +403,12 @@ def finalnoise(_, stats_method):
     ndpoints = len(stats_head)
     sz = ncols*ndpoints
     if len(stats_head) == 3: # val, lower, upper
-        stub = "r@{\hskip 12pt}r@{--}l"
+        stub = "@{\hskip 9pt}r@{\hskip 6pt}@{\hskip 6pt}r@{--}l@{\hskip 9pt}"
     else:
         stub = "r"
     c = [stub for i in cols]
-    c = "@{\hskip 18pt}".join(c*ncols)
-    fmt = "l@{\hskip 18pt}%s" % c
+    c = "".join(c*ncols)
+    fmt = "l@{\hskip 9pt}%s" % c
 
     print r"\begin{tabular}{%s}" % (fmt,)
     print r"\toprule"
@@ -413,7 +417,7 @@ def finalnoise(_, stats_method):
         print r" \cmidrule(r){%s-%s} " % (2+i*ndpoints, 1+ndpoints+i*ndpoints),
     print ""
 
-    print r" & %s \\" % (" & ".join([" & ".join(stats_head) for x in range(ncols)]), )
+    print r" & %s \tabularnewline" % (" & \n".join([" & \n".join([r"\centering %s" % head_i for head_i in stats_head]) for x in range(ncols)]), )
     print r"\midrule"
 
     rows = ["chop%s", "", "pink10,chop%s", "pink20,chop%s", "pink30,chop%s",
@@ -451,7 +455,6 @@ def finalnoise(_, stats_method):
         else:
             text = " & ".join([i for i in data])
         print r"%s & %s \\" % (title, text)
-    print r"\bottomrule"
     footer()
 
 def finalmods(_, stats_method):
@@ -489,11 +492,11 @@ def finalmods(_, stats_method):
             "chop35,speedup5,chop%s", "", "chop35,speeddown1,chop%s", "chop35,speeddown25,chop%s", "chop35,speeddown5,chop%s",
             "", "chop%s,volume50", "chop%s,volume80", "chop%s,volume120", "chop%s,mono", "", "chop%s,sample22",
             "chop%s,gsm", "chop%s,radio"]
-    row_titles = ["\quad Original query", "\quad Reduce bitrate", "\qquad 96\,Kbps", "\qquad 64\,Kbps",
-            "\quad Speed up", "\qquad 1\%{}", "\qquad 2.5\%{}",
-            "\qquad 5\%{}", "\quad Slow down", "\qquad 1\%{}", "\qquad 2.5\%{}", "\qquad 5\%{}", "\quad Adjust volume",
-            "\qquad 50\%{}", "\qquad 80\%{}",
-            "\qquad 120\%{}", "\quad Convert to mono", "\quad Downsample", "\qquad 22\,kHz", "\qquad 8\,kHz", "\quad Radio EQ"]
+    row_titles = ["Original query", "Reduce bitrate", "\quad 96\,Kbps", "\quad 64\,Kbps",
+            "Speed up", "\quad 1\%{}", "\quad 2.5\%{}",
+            "\quad 5\%{}", "Slow down", "\quad 1\%{}", "\quad 2.5\%{}", "\quad 5\%{}", "Adjust volume",
+            "\quad 50\%{}", "\quad 80\%{}",
+            "\quad 120\%{}", "Convert to mono", "Downsample", "\quad 22\,kHz", "\quad 8\,kHz", "Radio EQ"]
 
 
 
