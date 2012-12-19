@@ -47,7 +47,7 @@ def finalplain(x, y):
     print "}"
     print "\n"
 
-    print r"\subfloat[d']{"
+    print r"\subfloat[Sensitivity (d')]{"
     length(None, calc_dp)
     print "}"
 
