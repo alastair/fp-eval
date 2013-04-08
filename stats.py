@@ -3,8 +3,8 @@
 # Print statistics for a run
 
 # True positive: Gives the right answer
-# False positive A: Gives the wrong answer
-# False positive B: Gives a match when we didn't expect one
+# False positive A: Gives the wrong answer (false positive)
+# False positive B: Gives a match when we didn't expect one (false accept)
 # False negative: Says it's not there and it is
 # True negative: Says it's not there and it isn't
 
@@ -214,6 +214,21 @@ def dprime(data):
     if dprime < 0:
         dprime = 0.0
     return dprime
+
+def bias(data):
+    stats = dpwe(data)
+    nums = stats["numbers_dict"]
+    far = stats["far"]
+    if far == 0.0:
+        far += 0.01
+    car = stats["car"]
+    if car == 0.0:
+        car += 0.01
+
+    zhr=norm.ppf(car)
+    zfar=norm.ppf(far)
+    c = -1.0/2.0 * (zhr + zfar)
+    return c
 
 def print_dprime(data):
     dp = dprime(data)

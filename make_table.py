@@ -68,7 +68,7 @@ def length(_, stats_method):
     stats_head = [r"\multicolumn{1}{c}{%s}" % (shname) for shname in stats_head]
     print r"Algorithm & %s \\" % (" & ".join([" & ".join(stats_head) for x in cols]), )
     print r"\midrule"
-    
+
     rows = ["echoprint", "chromaprint", "landmark"]
     column_names = ["chop8", "chop15", "chop30", "30chop8", "30chop15", "30chop30"]
     for e in rows:
@@ -388,7 +388,8 @@ def calc_pe(data):
 
 def calc_dp(data):
     dprime = stats.dprime(data)
-    return (("$d'$", ), ("%2.2f" % round(dprime, 2),), (None,))
+    c = stats.bias(data)
+    return (("$d'$", "$c$" ), ("%2.2f" % round(dprime, 2), "%2.2f" % round(c, 2)), (None,))
 
 def calc_ss(data):
     r = stats.sensitivity(data)
@@ -430,7 +431,7 @@ def finalnoise(_, stats_method):
     chromaprint = calculate_row("chromaprint", rows, cols, stats_method)
     landmark = calculate_row("landmark", rows, cols, stats_method)
 
-    print r"\textsc{Echoprint} & \\" 
+    print r"\textsc{Echoprint} & \\"
     for data, title in zip(echoprint, row_titles):
         if data[0] == "":
             text = ""
@@ -439,7 +440,7 @@ def finalnoise(_, stats_method):
         print r"%s & %s \\" % (title, text)
 
     print r"\midrule"
-    print r"\textsc{Chromaprint} & \\" 
+    print r"\textsc{Chromaprint} & \\"
     for data, title in zip(chromaprint, row_titles):
         if data[0] == "":
             text = ""
@@ -448,7 +449,7 @@ def finalnoise(_, stats_method):
         print r"%s & %s \\" % (title, text)
 
     print r"\midrule"
-    print r"\textsc{Landmark} & \\" 
+    print r"\textsc{Landmark} & \\"
     for data, title in zip(landmark, row_titles):
         if data[0] == "":
             text = ""
@@ -484,7 +485,7 @@ def finalmods(_, stats_method):
     for i in range(3*ncols):
         print r" \cmidrule(r){%s-%s} " % (2+i*ndpoints, 1+ndpoints+i*ndpoints),
     print ""
-    
+
     # Metric headings
     print r" & %s \\ \hline" % (" & ".join([" & ".join(stats_head) for x in range(ncols*3)]), )
 
